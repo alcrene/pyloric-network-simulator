@@ -8,7 +8,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.14.5
 #   kernelspec:
-#     display_name: Python (emd-paper)
+#     display_name: Python (EMD paper)
 #     language: python
 #     name: emd-paper
 # ---
@@ -44,7 +44,7 @@
 #   '\actfn': '{\frac{#1}{1+\exp\left(\frac{#2}{#3}\right)}}'
 # ---
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # :::{only} html
 # %{{ startpreamble }}
 # %{{ endpreamble }}
@@ -75,6 +75,7 @@ from functools import partial
 from pathlib import Path
 from typing import Union, Type, Generator, Callable, Tuple, ClassVar
 from numpy import exp
+from numpy.typing import ArrayLike
 from scipy import integrate
 from addict import Dict
 
@@ -92,7 +93,6 @@ except ImportError:
     import emdd.jax_shim as jax
     import emdd.jax_shim.numpy as jnp
 
-
 # %% tags=["active-ipynb", "remove-input"]
 # import pint
 # ureg = pint.get_application_registry()
@@ -102,6 +102,10 @@ except ImportError:
 # from emdd.models import Sequential
 # hv.extension("matplotlib", "bokeh")
 # # Notebook-only imports
+
+# %% tags=["remove-cell"]
+__all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
+
 
 # %% [markdown]
 # ## Usage example
@@ -153,7 +157,7 @@ except ImportError:
 #                   g_cond_data = neuron_models.loc[["AB/PD 1", "LP 1", "PY 1"]]  # May be specified as DataFrame or Array
 #                   )
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # Define a set of time points and evaluate the model at those points.
 # A model simulation is always initialized with the result of a cached warm-up simulation (see [Initialization](#Initialization)). If no such simulation matching the model parameters is found in the cache, it is performed first and cached for future runs.
 #
@@ -161,17 +165,14 @@ except ImportError:
 #
 # :::{note}
 # :class: margin
-# The time points we specify with `t_gen` are only those which are recorded; they have no bearing on the integration time step.[^very-small-steps] To resolve spikes, a time resolution of 1 ms or less is needed.
+# The time points we provide to `model` are only those which are recorded; they have no bearing on the integration time step.[^very-small-steps] To resolve spikes, a time resolution of 1 ms or less is needed.
 # :::
 #
 # [^very-small-steps]: For deterministic systems, integration is performed using a Runge-Kutta 4(5) scheme with adaptive time step, which can number in the 100’s or more time steps per millisecond. If we recorded all of these we would quickly exceed memory limits.
 
 # %% tags=["active-ipynb"]
-# # Define a generator for t values, with 3000 ms burn-in and 1ms time steps
-# # This will generate t values 3000, 3001, 3002, etc.
-# t_gen = Sequential(x0=3000., Δx=1.)
 # # Generate 1001 sequential time points (3000–4000), and evaluate the model at those points
-# res = model(t_gen(1001))
+# res = model(np.linspace(3000, 4000, 1001))
 
 # %% [markdown]
 # Results are returned as a `SimResult` object, which has attributes to retrieve the different traces: membrane voltage `V`, calcium concentration `Ca`, synaptic activation `s`, membrane activation `m` and membrane inactivation `h`.
@@ -333,21 +334,25 @@ dims.t.unit = "ms"
 # The conductance model is described in {cite:t}`prinzAlternativeHandTuningConductanceBased2003` (p.1-2, §*Model*).
 # Where differences in notation occur, we prefer those in {cite:t}`prinzSimilarNetworkActivity2004`.
 #
-# In the equations, $I_i$ is the current for each channel, while $I_{\mathrm{input}}$ is the current from synaptic inputs. The latter are computed using the [synaptic model](#sec_synaptic-model) defined below.
+# In the equations, $I_i$ is the current for each channel, while $I_{\mathrm{input}}$ is the current from synaptic inputs $I_e$ and $I_s$. These are computed using the [electrical](#sec_elec-synapse-model) and [chemical](#sec_chem-synapse-model) synapse models defined below.
+# We also allow for an additional external input current $I_{\mathrm{ext}}$; this current is not necessary to drive the system (after all, a defining feature of the pyloric circuit is its spontaneous rhythm). Expected magnitudes for $I_{\mathrm{ext}}$ are 3–6 $\mathrm{nA}$.[^loose-units]
+#
+# [^loose-units]: Strictly speaking, the units of $I$ are actually $\mathrm{nA}/\mathrm{cm}^2$; reporting $I$ in units of $\mathrm{nA}$ implies the convention $C/A = 1$. A more correct, although less conventional, reporting of this magnitude would be $I_{\mathrm{ext}} \frac{A}{C} = $ 3–6 $\mathrm{mV}/\mathrm{ms}$.
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # :::{note}
 # :class: margin
 #
 # Although a concentration must always be positive, the differential equation for $\bigl[\Ca^{2+}\bigr]$ reproduced here from {cite:t}`prinzSimilarNetworkActivity2004` does not *per se* prevent the occurence of a negative concentration. (Sustained $\CaT$ and $\CaS$ currents could drive $\bigl[\Ca^{2+}\bigr]$ below zero.) In practice the rest of the ODE dynamics seem to prevent this, but nevertheless to ensure $\bigl[\Ca^{2+}\bigr]$ is always positive and improve numerical stability, in our [implementation](#sec_prinz-model_implementation) below we track $\log \bigl[\Ca^{2+}\bigr]$ instead. Since concentrations can span multiple orders of magnitude, considering them in log space is in fact rather natural.
 #
-# In theory a similar thing could be said of $m$ and $h$, which must be bounded within $[0, 1]$; in this case the logit transformation would be a natural way of ensuring the variables never exceed their bounds, [as we do](#sec_synaptic-model) for the synapse activations. In our applications this did not seem necessary, but it may be that for wider applications, the added stability from such a transformation is worth the extra computational cost.
+# A similar thing can be said of $m$ and $h$, which must be bounded within $[0, 1]$; in this case the logit transformation would be a natural way of ensuring the variables never exceed their bounds, [as we do](#sec_chem-synapse-model) for the synapse activations. In our application this did not seem necessary, but if future applications warrant it, we may implement the logit transform for $m$ and $h$.
 # :::
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # $$\begin{align}
-# C \frac{dV}{dt} &= -\sum_i I_i - I_{\mathrm{input}} \\
-# I_i &= g_i m_i^p h_i(V-E_i)A \\
+# \frac{C}{A} \frac{dV}{dt} &= -\sum_i I_i - I_{\mathrm{input}} \\
+# I_i &= g_i m_i^p h_i(V-E_i) \\
+# I_\mathrm{input} &= I_e + I_s + I_{\mathrm{ext}}\\
 # τ_m \frac{dm}{dt} &= m_\infty - m \\
 # τ_h \frac{dh}{dt} &= h_\infty - h
 # \end{align}$$ (eq_prinz-model_conductance)
@@ -412,7 +417,7 @@ dims.t.unit = "ms"
 # %% tags=["remove-cell", "active-ipynb"]
 # (Q_([1, 10], ureg.degC).to("kelvin") * ureg.boltzmann_constant / (2*ureg.elementary_charge)).to("mV")
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # :::{list-table} Constants
 # :name: tbl_prinz-model_constants
 # :header-rows: 1
@@ -446,8 +451,8 @@ dims.t.unit = "ms"
 #   - $\mathrm{ms}$
 # :::
 
-# %% [markdown]
-# If we multiply all the units en Eq. {eq}`eq_prinz-model_conductance` together, using $10^{-3} \, \mathrm{cm}^2$ for the unit of $A$, we find that they simplify to $1\,\mathrm{mV}/\mathrm{ms}$ – the desired units for $dV/dt$. Therefore we can write the implementation using only the magnitudes in the *values* column of {numref}`tbl_prinz-params_constants` and ignore the units. Moreover, we omit $C$ and $A$ since their magnitudes cancel.
+# %% [markdown] user_expressions=[]
+# If we multiply all the units en Eq. {eq}`eq_prinz-model_conductance` together, using $10^{-3} \, \mathrm{cm}^2$ for the unit of $A$, we find that they simplify to $1\,\mathrm{mV}/\mathrm{ms}$ – the desired units for $dV/dt$. Therefore we can write the implementation using only the magnitudes in the *values* column of {numref}`tbl_prinz-model_constants` and ignore the units. Moreover, we omit $C$ and $A$ since their magnitudes cancel.
 
 # %% tags=["active-ipynb", "remove-cell"]
 # # ------g----------   --V-E--   ---------A---------   ---C---
@@ -887,7 +892,7 @@ neuron_models = g_cond
 #   - [0, 0, 1, 1]
 # :::
 
-# %% tags=["remove-cell"] jupyter={"source_hidden": true}
+# %% tags=["remove-cell"]
 act_text_params = """
 * -
   - minf
@@ -1122,7 +1127,8 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 # activations_fig["IH"].opts(hv.opts.Curve(xaxis="bottom"))
 # activations_fig
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
+# (sec_elec-synapse-model)=
 # ## Electrical synapse model
 #
 # The *AB* and *PD* neurons are connected via an electric synapse {cite:p}`prinzSimilarNetworkActivity2004`, which is given as Eq. (13) in {cite:t}`marderModelingSmallNetworks1998`:[^also-diff-sign]
@@ -1131,18 +1137,20 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # Unfortunately {cite:t}`prinzSimilarNetworkActivity2004` do not seem to document the value of $g_e$ they use. For our simulations we set it to 1, so it can be omitted in the implementation. $I_e$ is then simply implemented as `V[:,newaxis] - V`, which yields the following antisymmetric matrix
 #
-# [^also-diff-sign]: As for the [chemical synapses](#sec_synaptic-model), we invert the sign to match the convention in {cite:t}`prinzSimilarNetworkActivity2004`.
+# [^also-diff-sign]: As for the [chemical synapses](#sec_chem-synapse-model), we invert the sign to match the convention in {cite:t}`prinzSimilarNetworkActivity2004`.
 
 # %% tags=["remove-input", "active-ipynb"]
 # _ = ["AB", "PD1", "PD2"]
 # _ = np.array([["0" if post==pre else f"{post} - {pre}" for pre in _] for post in _])
 # pd.DataFrame(_, index=pd.Index(["AB", "PD1", "PD2"], name="post ↓"), columns=pd.Index(["AB", "PD1", "PD2"], name="pre →")).style.set_caption("$V_{\mathrm{post}} - V_{\mathrm{pre}}$ matrix")
 
-# %% [markdown]
-# (sec_synaptic-model)=
+# %% [markdown] user_expressions=[]
+# (sec_chem-synapse-model)=
 # ## Chemical synapse model
 #
 # The chemical synapse model is defined in {cite:t}`prinzSimilarNetworkActivity2004` (p.1351, §**Methods**) and {cite:t}`marderModelingSmallNetworks1998` (Eqs. (14,18,19)) Here again, in case of discrepancy, we use the notation from {cite:t}`prinzSimilarNetworkActivity2004`.[^diff-sign]
+#
+# [^diff-sign]:  In particular that the two references use different conventions for the sign of $I_s$, which affects the sign in Eq. {numref}`eq_prinz-model_conductance`.
 
 # %% [markdown]
 # :::{note}
@@ -1157,15 +1165,13 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #    $$\frac{d\tilde{s}}{dt} = \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s s (1 - s) + ε} \,.$$
 # :::
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # $$\begin{align*}
 # I_s &= g_s s (\Vpost - E_s) \\
 # \frac{ds}{dt} &= \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s} \\
 # \sinf\bigl(\Vpre\bigr) &= \frac{1}{1 + \exp\bigl((\Vth - \Vpre)/Δ\bigr)} \\
 # τ_s &= \frac{1 - \sinf\bigl(\Vpre\bigr)}{\km}
 # \end{align*}$$
-#
-# [^diff-sign]:  In particular that the two references use different conventions for the sign of $I_s$, which affects the sign in Eq. {numref}`eq_prinz-model_conductance`.
 
 # %% [markdown]
 # :::{note} Memory layout of synapse variables
@@ -1287,7 +1293,7 @@ syn_constants = pd.DataFrame.from_dict(
 # %% tags=["active-ipynb"]
 # syn_constants
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # ## Circuit model
 #
 # The circuit used in {cite:t}`prinzSimilarNetworkActivity2004` is composed of three neuron populations:
@@ -1314,7 +1320,7 @@ syn_constants = pd.DataFrame.from_dict(
 #
 # In {cite:t}`prinzSimilarNetworkActivity2004` the AB and PD are lumped together into a single model, with the only difference being that the AB cell has glutamatergic synapses while the PD cells have slower cholinergic synapses.
 #
-# :::{figure} ../figures/prinz-model_circuit-diagram_fig-1b-from-Prinz-2004_grey.svg
+# :::{figure} ./prinz-model_circuit-diagram_fig-1b-from-Prinz-2004_grey.svg
 # :width: 150px
 #
 # Circuit diagram of the pyloric network, reproduced from Fig. 1 of {cite:t}`prinzSimilarNetworkActivity2004`.
@@ -1465,7 +1471,7 @@ SliceReduceVal = Tuple[Type[slice], tuple[Index,Index,Index]]
 # %% tags=["hide-input"]
 @partial(jax.jit,
          static_argnames=["pop_slices", "syn_slices", "elec_slice",
-                          "nchannels", "n_neurons",
+                          "nchannels", "n_neurons", "I_ext",
                           #"γ", "Caout", "Eleak", "p",
                           #"f", "Ca0", "τCa",
                           "idx_ICaT", "idx_ICaS",
@@ -1487,6 +1493,7 @@ def dX(t, X,
        #Ii,  # empty(n_channels, n_neurons)
        #Is,  # empty(n_neurons)
        n_neurons,   # Used for unpacking X
+       I_ext = None,
        *,
        ## Below are constants, pulled from the global module variables. They should not be used as arguments ##    
        # X unpacking
@@ -1626,6 +1633,9 @@ def dX(t, X,
     
     # Compute dV by summing inputs over channels
     dV = -Ii.sum(axis=-2) - Is
+    # Add external inputs
+    if I_ext:
+        dV -= I_ext(t)
     # Add contributions currents from electrical synapses (only the first population - AB/PD - has electrical synapses)
     #dV[..., pop_slices[0]] -= Ie
     dV.at[..., pop_slices[0]].add(-Ie)   # JAXMOD
@@ -1638,7 +1648,7 @@ def dX(t, X,
     return concat((dV.reshape(1,-1), dlogCa.reshape(1,-1), dlogits.reshape(1,-1), dm, dh)).reshape(-1)
 
 
-# %% [markdown]
+# %% [markdown] user_expressions=[]
 # ## Initialization
 #
 # For the experiments, we want to initialize models in a steady state. To find this steady state, we first need to run the model, generally for much longer than the amount of simulation time we need for the experiment itself. So we definitely don’t want to do this every time, so after simulating a model, we store the initial state in a cache on the disk. Thus we distinguish between two types of initialization:
@@ -1672,7 +1682,7 @@ def dX(t, X,
 #
 # - {cite:t}`prinzSimilarNetworkActivity2004` use $s=0$ for the warm initialization. This is presumably because the original neuron model catalog did not include simulations of $s$. In our case, we set $s=0$ for the cold initialization, and use it’s subsequent “warm” value for the data run. This is both simpler on the implementation side, and more consistent with the desire to let all spontaneous transients relax before connecting neurons.
 #
-# - We don’t first compute the warm initialization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, warm-up are identified by the `g_cond` matrix.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.
+# - We don’t first compute the warm initialization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, each warm initialization is identified by a `g_cond` matrix – $g_s$ and $I_{\mathrm{ext}}$ are ignored, since they are set to zero during warm-up.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.
 #
 # - Finally, instead of detecting the steady state automatically, we use a fixed integration time and rely on visual inspection to determine whether this is enough to let transients decay in all considered models. Again we can do this because we only need to simulate a handful of models.
 #
@@ -1682,7 +1692,7 @@ def dX(t, X,
 # - The cold initialization is implemented in the class method `State.cold_initialized`.
 # - The warm initialization is implemented in the method `Prinz2004.get_warm_init`.
 #
-# Three class attributes of `Prinz2004` are used to control the behaviour of the warm initialization:
+# Three class attributes of `Prinz2004` are used to control the behaviour of the warm-up simulation:
 #
 # - `__warm_init_store__` determines where the cache is stored on disk.
 # - `__warm_init_time__` is the warm-up simulation time; it is currently set to 5s.
@@ -1795,7 +1805,7 @@ class SimResult:
 
 # %%
 @dataclass(frozen=True)
-class Prinz2004:  # We could optionally inherit from emdd.models.Model here
+class Prinz2004:
     pop_sizes  : dict[str, int]
     gs         : Array[float, 2]
     g_cond_data: Optional[Array[float, 2]]=None
@@ -1815,9 +1825,9 @@ class Prinz2004:  # We could optionally inherit from emdd.models.Model here
 
     ## Public API ##
     
-    def __call__(self, t_array, seed=None):
+    def __call__(self, t_array, I_ext):
         X0 = self.get_warm_init()
-        res = self.integrate(0, X0, t_array)
+        res = self.integrate(0, X0, t_array, I_ext)
         return SimResult(t_array, res.y, self.pop_slices)
     
     # @property
@@ -1832,10 +1842,22 @@ class Prinz2004:  # We could optionally inherit from emdd.models.Model here
    
     ## Semi-private methods ##
     
-    def integrate(self, t0, X0: Union[Array, Prinz2004.State], t_eval) -> OdeResult:
+    def integrate(self, t0: float, X0: Union[Array, Prinz2004.State], t_eval: ArrayLike,
+                  I_ext: Optional[Callable]=None) -> OdeResult:
         """
         Integrate the model from the initial state `(t0, X0)`. The result will contain the states
         at all values in `t_eval`.
+        
+        Args:
+            t0: time corresponding to X0
+            X0: Initial state; either an instance of Prinz2004 or a flat vector.
+            t_eval: The time points at which to record the trace
+            I_ext: If provided, this should be a function with the signature ``(t) -> I``, where ``I``
+               is a 1-d vector with one element for every neuron. The units of I are nA; its value is
+               added directly to the derivative dV.
+               Alternatively, if all neurons should receive the same input, ``I`` can be a scalar.
+               (In case we do support a vectorized `dX` later, if the function accepts a vector as input,
+               the result should be of shape ``(time x neurons)``.
         """
         if isinstance(X0, State):
             X0_flat = X0.to_vector()
@@ -1856,7 +1878,8 @@ class Prinz2004:  # We could optionally inherit from emdd.models.Model here
             args=(self.g, self.gleak, self.gs, self.ge,  # Conductances
                   pop_slices, syn_slices, elec_slice,    # Population slices
                   self.E(X0.Ca),                         # Expanded from constants.E (except E[[1,2],:], corresponding to ECa, which is updated in-place)
-                  self.tot_cells),                       # Pre-computed number of neurons
+                  self.tot_cells,                        # Pre-computed number of neurons
+                  I_ext),                                # External input, if provided
             first_step=0.005)#constants.Δt)
         
         if res.status < 0:
@@ -2059,9 +2082,9 @@ class Prinz2004:  # We could optionally inherit from emdd.models.Model here
                 # Multiple discontinuous arrays: must use indexing
                 slcs[name] = np.concatenate([iarr[slc] for slc in slc_lst])
 
-        return slcs    
+        return slcs
 
-# %% [markdown] tags=["remove-cell"]
+# %% [markdown] tags=["remove-cell"] jp-MarkdownHeadingCollapsed=true
 # ## Step by step integration test
 #
 # If integration fails or raises warnings, we can use the cells below to advance the integrator one step at a time and diagnose the state.
