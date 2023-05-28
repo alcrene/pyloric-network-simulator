@@ -1,6 +1,7 @@
 numpy
 scipy
 jax[cpu]
+flufl.lock
 
 pandas
 holoviews
