@@ -231,11 +231,11 @@ __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 # hv.Curve(Vtraces.loc[:,"AB"]) + hv.Curve(Vtraces.loc[:,"LP"]) + hv.Curve(Vtraces.loc[:,"PY"])
 
 # %% [markdown]
-# To inspect the initialization curves, we use the private method `integrate_warm_init`; this is used internally to generate the warm initial state. It returns a `SimResult` object.
-# (NB: Since during warm initialization, we disconnect all neurons to get each’s individual spontaneous activity, it is only necessary to simulate one neuron per population. This is why the result returned by `integrate_warm_init` always has population sizes of 1.)
+# To inspect the initialization curves, we use the private method `thermalize`; this is used internally to generate the thermalized state. It returns a `SimResult` object.
+# (NB: Since during thermalization, we disconnect all neurons to get each’s individual spontaneous activity, it is only necessary to simulate one neuron per population. This is why the result returned by `thermalize` always has population sizes of 1.)
 
 # %% tags=["active-ipynb"]
-# res = model.integrate_warm_init()
+# res = model.thermalize()
 # Vtraces = res.V.droplevel("index", axis="columns")  # The initialization run has only one neuron per pop, since they are identical
 #
 # hv.output(backend="bokeh")  # Workaround: If we don’t switch the default, Bokeh ignores the new colors
@@ -1198,9 +1198,9 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # In the [implementation](#sec_prinz-model_implementation) below, we mitigate these issues in two ways:
 #
-# 1. We actually track $\tilde{s} = \log \frac{s}{1-s}$, which is the logit transform of $s$. This has the advantage of being unbounded, so applying a discrete update $\tilde{s}_{t+Δt} = \tilde{s}_t + \frac{d\tilde{s}}{dt} Δt$ will never produce an invalid value of $\tilde{s}$. The logit function is also monotone and thus invertible; its inverse is $s = \frac{e^{\tilde{s}}}{1 + e^{\tilde{s}}}$, and its derivative $\frac{d\tilde{s}}{dt} = \frac{1}{s(1-s)} \frac{ds}{dt}$.
+# 1. We actually track $\tilde{s} = \log \frac{s}{1-s}$, which is the logit transform of $s$. This has the advantage of being unbounded, so applying a discrete update $\tilde{s}_{t+Δt} = \tilde{s}_t + \frac{d\tilde{s}}{dt} Δt$ will never produce an invalid value of $\tilde{s}$. The logit function is also monotone and thus invertible; its inverse is $s = \frac{1}{1 + e^{-\tilde{s}}}$, and its derivative $\frac{d\tilde{s}}{dt} = \frac{1}{s(1-s)} \frac{ds}{dt}$.
 # 2. We add a small $ε = 10^{-8}$ to the denominator to ensure it is never exactly zero:
-#    $$\frac{d\tilde{s}}{dt} = \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s s (1 - s) + ε} \,.$$
+#    \begin{equation*}\frac{d\tilde{s}}{dt} = \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s s (1 - s) + ε} \,.\end{equation*}
 # :::
 
 # %% [markdown]
@@ -1605,7 +1605,7 @@ def dX(t, X,
     # Compute electrical synapse inputs using Eq (5)
     Ve = V[...,elec_slice,newax]
     Ie = ge * (Ve - swapaxes(Ve,-1,-2)).sum(axis=-1)   # This computes Ve - Ve.T, allowing for an additional time dimension on the left
-        # ge is assumed to be a scalar. Currently we always set it to 1, or 0 if we are computing the warm initialization (which requires a completely disconnected network)
+        # ge is assumed to be a scalar. Currently we always set it to 1, or 0 if we are computing the thermalization (which requires a completely disconnected network)
     
     # Compute the synaptic inputs using Eq (6)
     # (By splitting glut & chol, we can use scalars for all parameters and not have to worry about broadcasting with the shape of V)
@@ -1616,12 +1616,12 @@ def dX(t, X,
     s_glut = s[...,glutslc]
     s_chol = s[...,cholslc]
     
-    sinf_glut = 1 / (1 + exp(Vth_glut - Vglut)/Δ_glut)  # shape: (n_glut,)
-    sinf_chol = 1 / (1 + exp(Vth_chol - Vchol)/Δ_chol)  # shape: (n_chol,)
-    τs_glut = (1 - sinf_glut) / km_glut                 # shape: (n_glut,)
-    τs_chol = (1 - sinf_chol) / km_chol                 # shape: (n_chol,)
-    # ds_glut = (sinf_glut - s_glut) / τs_glut            # shape: (n_glut,)
-    # ds_chol = (sinf_chol - s_chol) / τs_chol            # shape: (n_glut,)
+    sinf_glut = 1 / (1 + exp(Vth_glut - Vglut)/Δ_glut)  # shape: (n_glut,)
+    sinf_chol = 1 / (1 + exp(Vth_chol - Vchol)/Δ_chol)  # shape: (n_chol,)
+    τs_glut = (1 - sinf_glut) / km_glut                 # shape: (n_glut,)
+    τs_chol = (1 - sinf_chol) / km_chol                 # shape: (n_chol,)
+    # ds_glut = (sinf_glut - s_glut) / τs_glut            # shape: (n_glut,)
+    # ds_chol = (sinf_chol - s_chol) / τs_chol            # shape: (n_glut,)
     dlogits_glut = (sinf_glut - s_glut) / (τs_glut * s_glut * (1-s_glut) + ε)   # Incl. chain rule w/ logit transform.
     dlogits_chol = (sinf_chol - s_chol) / (τs_chol * s_chol * (1-s_chol) + ε)   # ε=1e-8 is added for numerical stability
     
@@ -1687,8 +1687,8 @@ def dX(t, X,
 #   During this initialization run, the model is disconnected (all connectivities $g_s$ are set to 0) and receives no external input.
 #   This is done to allow neurons to reach a steady state, and mirrors the procedure followed by {cite:t}`prinzAlternativeHandTuningConductanceBased2003`.
 #
-# Warm initialization
-# ~ The final state of the initialization run is the “warm” initialization. 
+# Thermalized (“warm”) initialization
+# ~ The final state of the initialization run is the thermalized initialization. 
 #   Subsequent calls with the same model will retrieve this state from the cache.
 #   
 # Cold initialization values are provided by on p. 4001 of {cite:t}`prinzAlternativeHandTuningConductanceBased2003`:[^cold-init-s]
@@ -1710,23 +1710,23 @@ def dX(t, X,
 #
 # - For numerical stability, we track the values of $\logit m$, $\logit h$ and $\logit s$. This means we can’t initialize them exactly at 0 or 1; instead we use $\logit m = \logit s = -10$ and $\logit h = 10$, which correspond to approximately $m = s = 10^{-5}$ and $h = 10^5$.
 #
-# - {cite:t}`prinzSimilarNetworkActivity2004` set $s=0$ after the warm initialization. This is presumably because the original neuron model catalog did not include simulations of $s$. In our case, we set $s=0$ for the cold initialization, and use it’s subsequent “warm” value for the data run. This is both simpler on the implementation side, and more consistent with the desire to let all spontaneous transients relax before connecting neurons.
+# - {cite:t}`prinzSimilarNetworkActivity2004` set $s=0$ after the thermalization. This is presumably because the original neuron model catalog did not include simulations of $s$. In our case, we set $s=0$ for the cold initialization, and use it’s subsequent thermalized value for the data run. This is both simpler on the implementation side, and more consistent with the desire to let all spontaneous transients relax before connecting neurons.
 #
-# - We don’t first compute the warm initialization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, each warm initialization is identified by a `g_cond` matrix – $g_s$ and $I_{\mathrm{ext}}$ are ignored, since they are set to zero during warm-up.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.
+# - We don’t first compute the thermalization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, each thermalization run is identified by a `g_cond` matrix – $g_s$ and $I_{\mathrm{ext}}$ are ignored, since they are set to zero during thermalization.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.
 #
 # - Finally, instead of detecting the steady state automatically, we use a fixed integration time and rely on visual inspection to determine whether this is enough to let transients decay in all considered models. Again we can do this because we only need to simulate a handful of models.
 #
 # [^cold-init-s]: Except for $s$, which is initialized to 0 based on the section *Network simulation and classification* of {cite:t}`prinzSimilarNetworkActivity2004`. In any case, since we set the value of $g_s$ to 0 during the initialization run, the initial value we choose for $s$ is not important.
 #
 # **Implementation**
-# - The cold initialization is implemented in the class method `State.cold_initialized`.
-# - The warm initialization is implemented in the method `Prinz2004.get_warm_init`.
+# - The cold initialization is given by the class method `State.cold_initialized`.
+# - The warm-up simulation is implemented in the method `Prinz2004.get_thermalization`.
 #
 # Three class attributes of `Prinz2004` are used to control the behaviour of the warm-up simulation:
 #
-# - `__warm_init_store__` determines where the cache is stored on disk.
-# - `__warm_init_time__` is the warm-up simulation time; it is currently set to 5s.
-# - `__warm_init_time_step__` is the recording time step for the warm-up simulation. This is only relevant for inspecting the warm-up run.
+# - `__thermalization_store__` determines where the cache is stored on disk.
+# - `__thermalization_time__` is the warm-up simulation time; it is currently set to 5s.
+# - `__thermalization_time_step__` is the recording time step for the warm-up simulation. This is only relevant for inspecting the warm-up run.
 
 # %% [markdown]
 # ## Public API
@@ -1858,12 +1858,12 @@ class Prinz2004:
     ge         : float=1.  # Currently only used to turn on/off electrical connectivity
     
     # Private attributes
-    __warm_init_store__ : ClassVar[Path] = config.paths.simresults/"prinz2004_warm_init"
-    __warm_init_time__  : ClassVar[float] = 5000.   # Warm initialization is the state after this many seconds of spontaneous activity (no inputs, no synaptic connections)
-    __warm_init_time_step__: ClassVar[float] = 1.   # Warm initialization trace is recorded with this time step
+    __thermalization_store__ : ClassVar[Path] = config.paths.simresults/"prinz2004_thermalize"
+    __thermalization_time__  : ClassVar[float] = 5000.   # Warm initialization is the state after this many seconds of spontaneous activity (no inputs, no synaptic connections)
+    __thermalization_time_step__: ClassVar[float] = 1.   # Warm initialization trace is recorded with this time step
         # TODO: Instead of a fixed time step, using an `events` callback to detect spikes could substantially reduce the data we need to store
-    _warm_init_store_lock: ClassVar[Lock] = Lock(str(__warm_init_store__.with_suffix(".lock")))
-    _warm_init_store_lock.lifetime = timedelta(seconds=15)  # 15s is the default
+    _thermalization_store_lock: ClassVar[Lock] = Lock(str(__thermalization_store__.with_suffix(".lock")))
+    _thermalization_store_lock.lifetime = timedelta(seconds=15)  # 15s is the default
         
     def __post_init__(self):
         # For convenience, we allow passing `g_ion` as a DataFrame
@@ -1874,14 +1874,14 @@ class Prinz2004:
     ## Public API ##
     
     def __call__(self, t_array, I_ext: Optional[Callable]=None):
-        X0 = self.get_warm_init()
+        X0 = self.get_thermalization()
         res = self.integrate(0, X0, t_array, I_ext)
         return SimResult(t_array, res.y, self.pop_slices)
     
     # @property
     # def key(self):
     #     """
-    #     Hashable key which uniquely identifies this model. This is not the key used to check the warm init cache.
+    #     Hashable key which uniquely identifies this model. This is not the key used to check the thermalization cache.
     #     """
     #     return (tuple(self.pop_sizes.items()),
     #             tuple(tuple(row) for row in self.gs),
@@ -1912,10 +1912,10 @@ class Prinz2004:
 
     ## Semi-private methods ##
     
-    # Even though the dataclass is frozen, changing the init_store is allowed (at worst, it just means the warm init is recomputed)
+    # Even though the dataclass is frozen, changing the init_store is allowed (at worst, it just means the thermalization is recomputed)
     @classmethod
-    def clear_warm_init_store(cls):
-        cls.__warm_init_store__.unlink(missing_ok=True)
+    def clear_thermalization_store(cls):
+        cls.__thermalization_store__.unlink(missing_ok=True)
     
     def integrate(self, t0: float, X0: Union[Array, Prinz2004.State], t_eval: ArrayLike,
                   I_ext: Optional[Callable]=None) -> OdeResult:
@@ -1924,7 +1924,7 @@ class Prinz2004:
         at all values in `t_eval`.
         
         Args:
-            t0: time corresponding to X0
+            t0: time corresponding to X0
             X0: Initial state; either an instance of Prinz2004 or a flat vector.
             t_eval: The time points at which to record the trace
             I_ext: If provided, this should be a function with the signature ``(t) -> I``, where ``I``
@@ -2041,48 +2041,41 @@ class Prinz2004:
             self.pop_sizes, label_sub={r"(?:AB|PD).*": "elec"}, include=[r"AB|PD"])
         return slcs.get("elec", slice(0,0))  # If there are no neurons with electrical synapses, return an empty slice
   
-    def get_warm_init(self) -> State:
+    def get_thermalization(self) -> State:
         """
-        The warm initialization is obtained by integrating the network model
+        The thermalization is obtained by integrating the network model
         with all connections to zero, to find the spontaneous steady-state of
         each neuron model.
         This method either performs that integration, or, if it was already
         done before, retrieves it from a cache.
         """
-        sim = self.integrate_warm_init()
+        sim = self.thermalize()
         t, X = sim[-1]  # Get the final state
         # Warm init is done with one neuron per population: reinflate the populations.
-        # NB: The warm init uses the merged AB/PD populations of pop_slices
+        # NB: The thermalization uses the merged AB/PD populations of pop_slices
         pop_sizes = tuple(slc.stop-slc.start for slc in self.pop_slices.values())
         return State.from_array(
             np.repeat(X.to_array(), pop_sizes, axis=-1)
         )
     
-    def integrate_warm_init(self) -> SimResult:
+    def thermalize(self) -> SimResult:
         """
-        Compute the initial simulation used to obtain the warm initialization:
+        Compute the initial simulation used to thermalize the model.
         - Constructs a surrogate model with all population sizes set to 1.
         - Sets all connectivities to 0.
         - Integrate
         
-        In addition, this method manages the warm_init cache, and will skip
+        In addition, this method manages the termalization cache, and will skip
         all steps if it finds a result already in the cache.
         
         .. TODO:: Currently the cache key is the entire model, which is a bit
            wasteful. It would be better to cache the results of each neuron
            separately.
-           
-        .. TODO:: The cache is implemented using the `shelve` module, which
-           does not allow concurrent writes. However at present no lockfile
-           mechanism is implemented, so there is some risk to running this
-           in a parallelized context before all warm initializations have been
-           cached. (`shelve` supports concurrent *reads*, so aftwerds
-           parallelized cache retrieval should be safe.)
 
         Returns a `SimResult` instance, with recording resolution determined by
-        ``self.__warm_init_time_step__``.
+        ``self.__thermalization_time_step__``.
         
-        Normally this method is not used directly, but called by `get_warm_init`.
+        Normally this method is not used directly, but called by `get_thermalization`.
         The main reason to use it directly would be to plot the initialization
         run for inspection.
         """
@@ -2094,14 +2087,14 @@ class Prinz2004:
         #         pop_slices[pop] = slice(i,i+2); i += 2
         #     else:
         #         pop_slices[pop] = slice(i,i+1); i += 1
-        # We run the warm initialization by turning off synaptic connections,
+        # We thermalize the model by turning off synaptic connections,
         # so we also use a key which only depends on the model identities.
-        init_key = str((("T", self.__warm_init_time__), ("g_cond", self.g_cond.to_csv())))
-        if not self.__warm_init_store__.exists():
-            self.__warm_init_store__.parent.mkdir(parents=True, exist_ok=True)
+        init_key = str((("T", self.__thermalization_time__), ("g_cond", self.g_cond.to_csv())))
+        if not self.__thermalization_store__.exists():
+            self.__thermalization_store__.parent.mkdir(parents=True, exist_ok=True)
             warm_t_X = None
         else:
-            with shelve.open(str(self.__warm_init_store__), 'r') as store:
+            with shelve.open(str(self.__thermalization_store__), 'r') as store:
                 warm_t_X = store.get(init_key)
         if warm_t_X:
             t, warm_X = warm_t_X
@@ -2110,8 +2103,8 @@ class Prinz2004:
             # Get the cold initialized state (for a smaller model with 1 neuron / pop)
             X0 = State.cold_initialized(len(self.pop_slices))
             # Construct the array of times at which we will record
-            init_T = self.__warm_init_time__
-            Δt = self.__warm_init_time_step__
+            init_T = self.__thermalization_time__
+            Δt = self.__thermalization_time_step__
             t_eval = np.concatenate((np.arange(0, init_T, Δt), [init_T]))  # The final time init_T is always evaluated
             # Build the model with no connections and only one neuron per pop
             disconnected_model = Prinz2004(
@@ -2124,8 +2117,8 @@ class Prinz2004:
             res = disconnected_model.integrate(0, X0, t_eval)
             t, warm_X = res.t, res.y
             # Update the cache
-            with self._warm_init_store_lock:  # We use a lock file because shelve doesn't support concurrent writes (not doing this can corrupt the store)
-                with shelve.open(str(self.__warm_init_store__)) as store:
+            with self._thermalization_store_lock:  # We use a lock file because shelve doesn't support concurrent writes (not doing this can corrupt the store)
+                with shelve.open(str(self.__thermalization_store__)) as store:
                     store[init_key] = (t, warm_X)
         # Return
         return SimResult(t, warm_X,
