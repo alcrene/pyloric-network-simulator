@@ -6,17 +6,15 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.5
+#       jupytext_version: 1.14.4
 #   kernelspec:
 #     display_name: Python (emd-paper)
 #     language: python
 #     name: emd-paper
 # ---
 
-# %% [markdown] tags=["remove-cell"]
+# %% [markdown] tags=["remove-cell"] user_expressions=[]
 # ---
-# title: Three-population model of the pyloric circuit
-#
 # authors:
 #   - name: Alexandre René
 # math:
@@ -45,6 +43,10 @@
 #   
 #   '\logit': '\mathop{\mathrm{logit}}'
 # ---
+
+# %% [markdown] user_expressions=[]
+# (code_pyloric-circuit-implementation)=
+# # Three-population model of the pyloric circuit
 
 # %% [markdown]
 # :::{only} html
@@ -84,22 +86,24 @@ from scipy import integrate
 from addict import Dict
 
 from scityping.numpy import Array
-from emdd import config
 
 logger = logging.getLogger(__name__)
 
-# %% tags=["hide-input", "active-ipynb"]
+# %% editable=true slideshow={"slide_type": ""} tags=["hide-input", "active-ipynb"]
+# from config import config
 # try:
 #     import jax
+#     from jax import config as jax_config; jax_config.update("jax_enable_x64", True); del jax_config
 #     import jax.numpy as jnp
 # except ImportError:
 #     import jax_shim as jax
 #     import jax_shim.numpy as jnp
 
-# %% tags=["remove-cell", "active-py"]
+# %% editable=true raw_mimetype="" slideshow={"slide_type": ""} tags=["remove-cell", "active-py"]
+from .config import config
 try:
     import jax
-    # from jax import config as jax_config; jax_config.update("jax_enable_64", True); del jax_config
+    #from jax import config as jax_config; jax_config.update("jax_enable_x64", True); del jax_config
     import jax.numpy as jnp
 except ImportError:
     from . import jax_shim as jax
@@ -677,7 +681,7 @@ constants = namedtuple("Constants", ["E", "Eleak", "p", "τCa", "f", "Ca0", "Cao
 #   - 0.02
 # ::::
 
-# %% tags=["remove-cell"] jupyter={"source_hidden": true}
+# %% tags=["remove-cell"]
 g_cond_text = r"""
 * - Model neuron
   - $g(I_\mathrm{Na})$
@@ -1194,13 +1198,13 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 # :::{note}
 # :class: margin
 #
-# These are the equations as reported in {cite:t}`prinzSimilarNetworkActivity2004`, but as-is, they are numerically unstable, for two reasons: First, $s$ should stay bounded between. Second, these equations ensure this by assuming infinitely precise integration: as $s_\infty$ approaches 1, $τ_s$ goes to zero and $ds/dt$ diverges. Diverging derivatives cause the integrator to stall, since it must make smaller and smaller time steps in order to maintain precision.
+# These are the equations as reported in {cite:t}`prinzSimilarNetworkActivity2004`, but as-is they are numerically unstable because $s$ should stay bounded between 0 and 1. The equations ensure this by assuming infinitely precise integration: as $s_\infty$ approaches 1, $τ_s$ goes to zero and $ds/dt$ diverges. Diverging derivatives cause a numerical integrator to stall, since it must make smaller and smaller time steps in order to maintain precision.
 #
-# In the [implementation](#sec_prinz-model_implementation) below, we mitigate these issues in two ways:
+# In the [implementation](#sec_prinz-model_implementation) below, we mitigate this issues in two ways:
 #
 # 1. We actually track $\tilde{s} = \log \frac{s}{1-s}$, which is the logit transform of $s$. This has the advantage of being unbounded, so applying a discrete update $\tilde{s}_{t+Δt} = \tilde{s}_t + \frac{d\tilde{s}}{dt} Δt$ will never produce an invalid value of $\tilde{s}$. The logit function is also monotone and thus invertible; its inverse is $s = \frac{1}{1 + e^{-\tilde{s}}}$, and its derivative $\frac{d\tilde{s}}{dt} = \frac{1}{s(1-s)} \frac{ds}{dt}$.
 # 2. We add a small $ε = 10^{-8}$ to the denominator to ensure it is never exactly zero:
-#    \begin{equation*}\frac{d\tilde{s}}{dt} = \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s s (1 - s) + ε} \,.\end{equation*}
+#    \begin{equation*}\frac{d\tilde{s}}{dt} = \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s \,s (1 - s) + ε} \,.\end{equation*}
 # :::
 
 # %% [markdown]
