@@ -6,14 +6,14 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.4
+#       jupytext_version: 1.14.7
 #   kernelspec:
 #     display_name: Python (emd-paper)
 #     language: python
 #     name: emd-paper
 # ---
 
-# %% [markdown] tags=["remove-cell"] user_expressions=[]
+# %% [markdown] tags=["remove-cell"]
 # ---
 # authors:
 #   - name: Alexandre René

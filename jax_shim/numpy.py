@@ -15,9 +15,24 @@ things we can just redirect ``jnp.<op>`` to ``np.<op>``.
 """
 
 import numpy as np
+from functools import wraps
 
 def __getattr__(attr):
-    return getattr(np, attr)
+    try:
+        return ufunc_dict[attr]
+    except KeyError:
+        return getattr(np, attr)
+
+## Ufuncs which return arrays with .at method ##
+
+def ufunc_wrapper(ufunc):
+    @wraps(ufunc)
+    def wrapper(*args, **kwds):
+        return array(ufunc(*args, **kwds))
+    return wrapper
+ufunc_dict = {nm: ufunc_wrapper(obj)
+              for nm, obj in np.__dict__.items()
+              if isinstance(obj, np.ufunc)}
 
 ## Array with .at method ##
 # C.f. https://numpy.org/doc/stable/user/basics.subclassing.html#slightly-more-realistic-example-attribute-added-to-existing-array
@@ -58,6 +73,9 @@ class _AtOp:
     def add(self, value):
         self.owner[self.key] += value
         return self.owner
+    def multiply(self, value):
+        self.owner[self.key] *= value
+        return self.owner
 
 
 # ## Wrapped functions ##
@@ -68,3 +86,6 @@ class _AtOp:
 
 def concatenate(*args, **kwds):
     return array(np.concatenate(*args, **kwds))
+
+def empty_like(*args, **kwds):
+    return array(np.empty_like(*args,**kwds))
