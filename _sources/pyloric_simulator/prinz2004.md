@@ -2361,8 +2361,12 @@ solver = integrate.RK45(_dX, 0, X0.to_vector(), 60.,
 Execute the following cell repeatedly to advance the integrator to the problematic point.
 
 ```{code-cell} ipython3
-:tags: [active-ipynb, skip-execution, remove-cell]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [active-ipynb, skip-execution, remove-cell]
+---
 for _ in range(200):
     try:
         solver.step()
@@ -2373,8 +2377,12 @@ solver.t
 ```
 
 ```{code-cell} ipython3
-:tags: [active-ipynb, skip-execution, remove-cell]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [active-ipynb, skip-execution, remove-cell]
+---
 solver.step()
 solver.t
 ```
@@ -2541,24 +2549,4 @@ act_track["IH"].opts(hv.opts.Curve(xaxis="bottom"),
                      hv.opts.Overlay(height=200, backend="bokeh"))  # Extra space for axis
 #voltage_track["INa","tauh"].opts(hv.opts.VLine(show_legend=True))
 act_track
-```
-
-```{code-cell} ipython3
----
-editable: true
-slideshow:
-  slide_type: ''
-tags: [remove-input]
----
-%load_ext watermark
-```
-
-```{code-cell} ipython3
----
-editable: true
-slideshow:
-  slide_type: ''
-tags: [remove-input]
----
-%watermark -d -t -u
 ```

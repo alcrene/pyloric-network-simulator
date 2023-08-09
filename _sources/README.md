@@ -129,14 +129,15 @@ See the documentation.
 
 Ensure the *.md* and *.py* files are synchronized
 
-    jupytext --sync prinz2004.md
+    jupytext --sync pyloric_simulator/prinz2004.md
 
-Build the documentation
+[Build](https://jupyterbook.org/en/stable/start/your-first-book.html) the documentation using
 
-    jb build prinz2004.md
+    jb build .
 
-Push to GitHub Pages
+[Push](https://jupyterbook.org/en/stable/publish/gh-pages.html#option-2-automatically-push-your-build-files-with-ghp-import) to GitHub Pages
 
+    ghp-import -n -p -f _build/html
 
 
 [^model-def]:
