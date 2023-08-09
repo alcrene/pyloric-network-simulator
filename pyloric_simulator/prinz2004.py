@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.7
+#       jupytext_version: 1.15.0
 #   kernelspec:
-#     display_name: Python (emd-paper)
+#     display_name: Python (pyloric-network)
 #     language: python
-#     name: emd-paper
+#     name: pyloric-network
 # ---
 
 # %% [markdown] tags=["remove-cell"]
@@ -44,9 +44,9 @@
 #   '\logit': '\mathop{\mathrm{logit}}'
 # ---
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # (code_pyloric-circuit-implementation)=
-# # Three-population model of the pyloric circuit
+# # Pyloric network simulator
 
 # %% [markdown]
 # :::{only} html
@@ -129,7 +129,6 @@ except ImportError:
 # Q_ = ureg.Quantity
 #
 # from scipy import integrate
-# from emdd.models import Sequential
 # hv.extension("matplotlib", "bokeh")
 # # Notebook-only imports
 
@@ -140,9 +139,9 @@ __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 # %% [markdown]
 # ## Usage example
 
-# %% tags=["active-ipynb"]
+# %% editable=true slideshow={"slide_type": ""} tags=["active-ipynb", "remove-output"]
 # import holoviews as hv
-# from prinz2004 import Prinz2004, neuron_models, dims
+# from pyloric_simulator.prinz2004 import Prinz2004, neuron_models, dims
 # hv.extension("bokeh")  # Bokeh plots allow to zoom in on the trace much more easily
 
 # %% [markdown]
@@ -157,7 +156,7 @@ __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 
 # %% [markdown]
 # :::{margin}
-# If ion channel conductivities are not specified explicitely specified, `Prinz2004` will used the values for the models
+# If ion channel conductivities are not specified explicitely specified, `Prinz2004` will use the values for the models
 # matching the keys of `pop_sizes`, so this also works:
 #
 # ```python
@@ -191,7 +190,7 @@ __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 
 # %% [markdown]
 # Define a set of time points and evaluate the model at those points.
-# A model simulation is always initialized with the result of a cached warm-up simulation (see [Initialization](#Initialization)). If no such simulation matching the model parameters is found in the cache, it is performed first and cached for future runs.
+# A model simulation is always initialized with the result of a cached warm-up simulation (see [Initialization](sec-initialization)). If no such simulation matching the model parameters is found in the cache, it is performed first and cached for future runs.
 #
 # The example below reproduces the procedure of {cite:t}`prinzSimilarNetworkActivity2004`: After neurons are connected, an initial simulation of 3s is thrown away to let transients decay. Then 1s is simulated to generate the data for that network model.
 #
@@ -366,7 +365,7 @@ dims.t.unit = "ms"
 # The conductance model is described in {cite:t}`prinzAlternativeHandTuningConductanceBased2003` (p.1-2, §*Model*).
 # Where differences in notation occur, we prefer those in {cite:t}`prinzSimilarNetworkActivity2004`.
 #
-# In the equations, $I_i$ is the current for each channel, while $I_{\mathrm{input}}$ is the current from synaptic inputs $I_e$ and $I_s$. These are computed using the [electrical](#sec_elec-synapse-model) and [chemical](#sec_chem-synapse-model) synapse models defined below.
+# In the equations, $I_i$ is the current for each channel, while $I_{\mathrm{input}}$ is the current from synaptic inputs $I_e$ and $I_s$. These are computed using the [electrical](sec_elec-synapse-model) and [chemical](sec_chem-synapse-model) synapse models defined below.
 # We also allow for an additional external input current $I_{\mathrm{ext}}$; this current is not necessary to drive the system (after all, a defining feature of the pyloric circuit is its spontaneous rhythm). Expected magnitudes for $I_{\mathrm{ext}}$ are 3–6 $\mathrm{nA}$.[^loose-units]
 #
 # [^loose-units]: Strictly speaking, the units of $I$ are actually $\mathrm{nA}/\mathrm{cm}^2$; reporting $I$ in units of $\mathrm{nA}$ implies the convention $C/A = 1$. A more correct, although less conventional, reporting of this magnitude would be $I_{\mathrm{ext}} \frac{A}{C} = $ 3–6 $\mathrm{mV}/\mathrm{ms}$.
@@ -375,19 +374,23 @@ dims.t.unit = "ms"
 # :::{note}
 # :class: margin
 #
-# Although a concentration must always be positive, the differential equation for $\bigl[\Ca^{2+}\bigr]$ reproduced here from {cite:t}`prinzSimilarNetworkActivity2004` does not *per se* prevent the occurence of a negative concentration. (Sustained $\CaT$ and $\CaS$ currents could drive $\bigl[\Ca^{2+}\bigr]$ below zero.) In practice the rest of the ODE dynamics seem to prevent this, but nevertheless to ensure $\bigl[\Ca^{2+}\bigr]$ is always positive and improve numerical stability, in our [implementation](#sec_prinz-model_implementation) below we track $\log \bigl[\Ca^{2+}\bigr]$ instead. Since concentrations can span multiple orders of magnitude, considering them in log space is in fact rather natural.
+# Although a concentration must always be positive, the differential equation for $\bigl[\Ca^{2+}\bigr]$ reproduced here from {cite:t}`prinzSimilarNetworkActivity2004` does not *per se* prevent the occurence of a negative concentration. (Sustained $\CaT$ and $\CaS$ currents could drive $\bigl[\Ca^{2+}\bigr]$ below zero.) In practice the rest of the ODE dynamics seem to prevent this, but nevertheless to ensure $\bigl[\Ca^{2+}\bigr]$ is always positive and improve numerical stability, in our [implementation](sec-prinz-model-implementation) below we track $\log \bigl[\Ca^{2+}\bigr]$ instead. Since concentrations can span multiple orders of magnitude, considering them in log space is in fact rather natural.
 #
-# A similar thing can be said of $m$ and $h$, which must be bounded within $[0, 1]$; in this case we use a logit transformation to ensure the variables never exceed their bounds. ([We also do this](#sec_chem-synapse-model) for the synapse activations.)
+# A similar thing can be said of $m$ and $h$, which must be bounded within $[0, 1]$; in this case we use a logit transformation to ensure the variables never exceed their bounds. ([We also do this](sec_chem-synapse-model) for the synapse activations.)
 # :::
 
 # %% [markdown]
-# $$\begin{align}
+# ```{math}
+# :label: eq-prinz-model-conductance
+#
+# \begin{align}
 # \frac{C}{A} \frac{dV}{dt} &= -\sum_i I_i - I_{\mathrm{input}} \\
 # I_i &= g_i m_i^p h_i(V-E_i) \\
 # I_\mathrm{input} &= I_e + I_s + I_{\mathrm{ext}}\\
 # τ_m \frac{dm}{dt} &= m_\infty - m \\
 # τ_h \frac{dh}{dt} &= h_\infty - h
-# \end{align}$$ (eq_prinz-model_conductance)
+# \end{align}
+# ```
 
 # %% [markdown]
 # $$\begin{align*}
@@ -484,7 +487,7 @@ dims.t.unit = "ms"
 # :::
 
 # %% [markdown]
-# If we multiply all the units en Eq. {eq}`eq_prinz-model_conductance` together, using $10^{-3} \, \mathrm{cm}^2$ for the unit of $A$, we find that they simplify to $1\,\mathrm{mV}/\mathrm{ms}$ – the desired units for $dV/dt$. Therefore we can write the implementation using only the magnitudes in the *values* column of {numref}`tbl_prinz-model_constants` and ignore the units. Moreover, we omit $C$ and $A$ since their magnitudes cancel.
+# If we multiply all the units en Eq. {eq}`eq-prinz-model-conductance` together, using $10^{-3} \, \mathrm{cm}^2$ for the unit of $A$, we find that they simplify to $1\,\mathrm{mV}/\mathrm{ms}$ – the desired units for $dV/dt$. Therefore we can write the implementation using only the magnitudes in the *values* column of {numref}`tbl_prinz-model_constants` and ignore the units. Moreover, we omit $C$ and $A$ since their magnitudes cancel.
 
 # %% tags=["active-ipynb", "remove-cell"]
 # # ------g----------   --V-E--   ---------A---------   ---C---
@@ -506,7 +509,7 @@ constants = namedtuple("Constants", ["E", "Eleak", "p", "τCa", "f", "Ca0", "Cao
 # %% [markdown]
 # ### Maximum channel conductances
 #
-# These are the channel conductance values ($g$) to use in Eq. {eq}`eq_prinz-model_conductance`; they are reproduced from Table 2 in {cite:t}`prinzSimilarNetworkActivity2004`.
+# These are the channel conductance values ($g$) to use in Eq. {eq}`eq-prinz-model-conductance`; they are reproduced from Table 2 in {cite:t}`prinzSimilarNetworkActivity2004`.
 #
 # Differences in these values is what differentiates neuron models.
 
@@ -876,7 +879,7 @@ neuron_models = g_cond
 # This form allows us to implement them as almost entirely vectorized operations, which calculate all activation variables simultaneously.
 # Only the $y(V, \bigl[\Ca^{2+}\bigr])$ function requires a loop over the five channel types for which it is non-zero
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # :::{note}
 # :class: margin
 #
@@ -1034,21 +1037,6 @@ nhchannels = 4         # Number of ion channels which have an h variable
 
 
 # %% [markdown]
-# The synapse strength $g_s$ determines the network connectivity. In {cite:t}`prinzSimilarNetworkActivity2004`, this parameter takes one of the following values:
-#
-# :::{list-table} Possible synapse conductance values ($g_s$)
-# :name: tbl_prinz-params_synapse-values
-#
-# * - 0 nS
-#   - 1 ns  
-#     (PY only)
-#   - 3 nS
-#   - 10 nS
-#   - 30 ns
-#   - 100 nS
-# :::
-
-# %% [markdown] user_expressions=[]
 # :::{caution}
 # :class: margin
 #
@@ -1175,11 +1163,11 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # The *AB* and *PD* neurons are connected via an electric synapse {cite:p}`prinzSimilarNetworkActivity2004`, which is given as Eq. (13) in {cite:t}`marderModelingSmallNetworks1998`:[^also-diff-sign]
 #
-# $$I_e = g_e (V_{\mathrm{post}} - V_{\mathrm{pre}}) \,.$$ (eq_prinz-model_elec-synaps)
+# $$I_e = g_e (V_{\mathrm{post}} - V_{\mathrm{pre}}) \,.$$ (eq-prinz-model-elec-synapse)
 #
 # Unfortunately {cite:t}`prinzSimilarNetworkActivity2004` do not seem to document the value of $g_e$ they use. For our simulations we set it to 1, so it can be omitted in the implementation. $I_e$ is then simply implemented as `V[:,newaxis] - V`, which yields the following antisymmetric matrix
 #
-# [^also-diff-sign]: As for the [chemical synapses](#sec_chem-synapse-model), we invert the sign to match the convention in {cite:t}`prinzSimilarNetworkActivity2004`.
+# [^also-diff-sign]: As for the [chemical synapses](sec_chem-synapse-model), we invert the sign to match the convention in {cite:t}`prinzSimilarNetworkActivity2004`.
 
 # %% tags=["remove-input", "active-ipynb"]
 # _ = ["AB", "PD1", "PD2"]
@@ -1192,7 +1180,7 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # The chemical synapse model is defined in {cite:t}`prinzSimilarNetworkActivity2004` (p.1351, §**Methods**) and {cite:t}`marderModelingSmallNetworks1998` (Eqs. (14,18,19)) Here again, in case of discrepancy, we use the notation from {cite:t}`prinzSimilarNetworkActivity2004`.[^diff-sign]
 #
-# [^diff-sign]:  In particular that the two references use different conventions for the sign of $I_s$, which affects the sign in Eq. {numref}`eq_prinz-model_conductance`.
+# [^diff-sign]:  In particular that the two references use different conventions for the sign of $I_s$, which affects the sign in Eq. {eq}`eq-prinz-model-conductance`.
 
 # %% [markdown]
 # :::{note}
@@ -1200,7 +1188,7 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # These are the equations as reported in {cite:t}`prinzSimilarNetworkActivity2004`, but as-is they are numerically unstable because $s$ should stay bounded between 0 and 1. The equations ensure this by assuming infinitely precise integration: as $s_\infty$ approaches 1, $τ_s$ goes to zero and $ds/dt$ diverges. Diverging derivatives cause a numerical integrator to stall, since it must make smaller and smaller time steps in order to maintain precision.
 #
-# In the [implementation](#sec_prinz-model_implementation) below, we mitigate this issues in two ways:
+# In the [implementation](sec-prinz-model-implementation) below, we mitigate this issues in two ways:
 #
 # 1. We actually track $\tilde{s} = \log \frac{s}{1-s}$, which is the logit transform of $s$. This has the advantage of being unbounded, so applying a discrete update $\tilde{s}_{t+Δt} = \tilde{s}_t + \frac{d\tilde{s}}{dt} Δt$ will never produce an invalid value of $\tilde{s}$. The logit function is also monotone and thus invertible; its inverse is $s = \frac{1}{1 + e^{-\tilde{s}}}$, and its derivative $\frac{d\tilde{s}}{dt} = \frac{1}{s(1-s)} \frac{ds}{dt}$.
 # 2. We add a small $ε = 10^{-8}$ to the denominator to ensure it is never exactly zero:
@@ -1288,7 +1276,7 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 # :::
 
 # %% [markdown]
-# The conductivity $g_s$ determines the synapse’s strength, and therefore the network’s connectivity. See [Circuit model](#Circuit-model) below.
+# The conductivity $g_s$ determines the synapse’s strength, and therefore the network’s connectivity. See [Circuit model](sec-prinz-circuit-model) below.
 
 # %% [markdown]
 # The synapse parameters are chosen to match the inhibitory postsynaptic potentials (IPSPs) generated in the postsynaptic cell, which in turn depend on the type of neurotransmitter released by the *pre*synaptic cell.
@@ -1336,7 +1324,7 @@ syn_constants = pd.DataFrame.from_dict(
 # syn_constants
 
 # %% [markdown]
-# (sec_prinz2004-circuit-model)=
+# (sec-prinz-circuit-model)=
 # ## Circuit model
 #
 # The circuit used in {cite:t}`prinzSimilarNetworkActivity2004` is composed of three neuron populations:
@@ -1385,7 +1373,7 @@ syn_constants = pd.DataFrame.from_dict(
 # :::
 
 # %% [markdown]
-# (sec_prinz-model_implementation)=
+# (sec-prinz-model-implementation)=
 # ## Implementation of $dV/dt$
 #
 # The evolution equations are implemented as a function `dX` for use with SciPy’s ODE solvers. Since these integrate only a single vector argument, we concatenate $V$, $\bigl[\Ca^{2+}\bigr]$, $s$, $m$ and $h$ into a single array variable $X$.
@@ -1681,6 +1669,7 @@ def dX(t, X,
 
 
 # %% [markdown]
+# (sec-initialization)=
 # ## Initialization
 #
 # For the experiments, we want to initialize models in a steady state. To find this steady state, we first need to run the model, generally for much longer than the amount of simulation time we need for the experiment itself. So we definitely don’t want to do this every time, so after simulating a model, we store the initial state in a cache on the disk. Thus we distinguish between two types of initialization:
@@ -2179,7 +2168,7 @@ class Prinz2004:
 # %% [markdown]
 # ## Anecdotal timings
 #
-# All timings use the circuit model described in {numref}`sec_prinz2004-circuit-model`.
+# All timings use the circuit model described in the {ref}`sec-prinz-circuit-model` section.
 
 # %% [markdown]
 # :::{list-table} Timing single evaluations of the `dX` function.
@@ -2255,7 +2244,7 @@ class Prinz2004:
 # %% [markdown] tags=["remove-cell"]
 # Execute the following cell repeatedly to advance the integrator to the problematic point.
 
-# %% tags=["active-ipynb", "skip-execution", "remove-cell"]
+# %% tags=["active-ipynb", "skip-execution", "remove-cell"] editable=true slideshow={"slide_type": ""}
 # for _ in range(200):
 #     try:
 #         solver.step()
@@ -2264,7 +2253,7 @@ class Prinz2004:
 #         break
 # solver.t
 
-# %% tags=["active-ipynb", "skip-execution", "remove-cell"]
+# %% tags=["active-ipynb", "skip-execution", "remove-cell"] editable=true slideshow={"slide_type": ""}
 # solver.step()
 # solver.t
 
@@ -2324,7 +2313,7 @@ class Prinz2004:
 #     print(" dlogits :", dlogits)
 #     
 
-# %% [markdown]
+# %% [markdown] editable=true slideshow={"slide_type": ""} tags=["remove-cell"]
 # Synaptic currents
 
 # %% tags=["remove-cell", "active-ipynb", "skip-execution"]
@@ -2342,7 +2331,7 @@ class Prinz2004:
 #                   columns=pd.Index(neuron_labels, name="pre →"))
 # df.style.format(precision=2)
 
-# %% [markdown] tags=["remove-cell"]
+# %% [markdown] tags=["remove-cell"] editable=true slideshow={"slide_type": ""}
 # Finally we compare the values of $V$, $m$ and $h$ with the $m_\infty$ and $h_\infty$ activation curves.
 
 # %% tags=["active-ipynb", "skip-execution", "remove-cell"]
@@ -2375,7 +2364,7 @@ class Prinz2004:
 # %% [markdown] tags=["remove-cell"]
 # Current activations ($m$, $h$)
 
-# %% tags=["active-ipynb", "skip-execution", "remove-cell"]
+# %% editable=true slideshow={"slide_type": ""} tags=["active-ipynb", "skip-execution", "remove-cell"]
 # hv.output(backend="bokeh")
 # m_lines = hv.HoloMap(
 #     {(channel, "minf"): hv.Overlay(
@@ -2409,4 +2398,8 @@ class Prinz2004:
 # #voltage_track["INa","tauh"].opts(hv.opts.VLine(show_legend=True))
 # act_track
 
-# %%
+# %% editable=true slideshow={"slide_type": ""} tags=["remove-input"]
+# %load_ext watermark
+
+# %% editable=true slideshow={"slide_type": ""} tags=["remove-input"]
+# %watermark -d -t -u

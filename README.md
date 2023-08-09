@@ -19,8 +19,8 @@ This repository is a reimplementation of the model in pure Python, using JAX to 
   - Python is easier to read than C++ and familiar to more users (especially to scientists).
   - Code structure closely follows how the model is defined in the papers, making it easier to understand each component.
   - The entire model fits in a single code file.
-  - The code file can be opened in a Jupyter Notebook,[^jupytext] providing structure and formatted documentation explaining each code section in detail.
-    ![Inlined documentation: Conductance model](inlined-docs-1.png)  ![Inlined documentation: Constants](inlined-docs-1.png)
+  - The code file can be opened in a Jupyter Notebook,[^jupytext] providing structure and formatted documentation explaining each code section in detail.  
+    ![Screenshot: Conductance model](docs/inlined-docs-1.png)  ![Screenshot: Constants](docs/inlined-docs-1.png)
 - Easy to modify:
   - Users have full control over the circuit topology: number, size and type of populations, as well as the synaptic conductivities, are all specified when creating the model:
 
@@ -41,8 +41,8 @@ This repository is a reimplementation of the model in pure Python, using JAX to 
                                       [    3  ,     0 ] ],
                           g_ion = neuron_models.loc[["AB/PD 3", "LP 1"]]
                           )
-- Fully documented: The full specification of the pyloric circuit model is spread across at least three resources[^model-def].
-  The included inlined documentation collects all definitions in one place, fully referenced and with standardized notation.
+- Fully documented: The original specification of the pyloric circuit model is spread across at least three resources[^model-def].
+  The included inlined documentation collects all definitions in one place, is fully referenced and uses standardized notation.
 - Fast: Special care was taken to use vectorized operations wherever possible, and JAX’s JIT capability is used to compile
   the model to C at runtime. This should provide speeds comparable with a plain C/C++ implementation.
   Use of JAX also opens the possibility of using GPU acceleration for models with many neurons.
@@ -56,16 +56,32 @@ This implementaiton has *not* been exhaustively tested for consistency with the 
 - Basic qualitative comparisons suggests that the single neuron conductance models closely reproduce the results reported by Prinz et al.
 - Some differences in the simulated activity (wrt to the original implementation) do seem to occur when neuron models are combined into a circuit.
 
+### Code structure
+
+The code uses [MyST Markdown](https://mystmd.org/) and [Jupytext](https://jupytext.readthedocs.io/), which enables a [literate programming](https://texfaq.org/FAQ-lit) style by embedding rich Markdown comments in Python comments.
+The result is documentation and code which as near as possible.
+This is especially useful for scientific programming, where the code itself may not be especially complicated, but may be the result of
+complex arguments which need mathematics or figures to express intelligibly.
+
+Literate code files like `prinz2004.py` are multi-purpose:
+- Import them as normal Python modules.
+- Run them as normal Python modules on the command line.
+- When opened in Jupyter Notebook or VS Code, all markdown comments are rendered inline, placing math and figures right there alongside the code.
+- Export to HTML book format (this is how we produce the documentation).
+
 ## Installation
 
 Since the documentation is inlined with the code, we recommend including the source code in your project
 
-1. Download the [most recent release](https://github.com/alcrene/pyloric-network-simulator/releases).
-2. Unpack into your project directory, so it looks something like this:
+1. Download the [most recent release](https://github.com/alcrene/pyloric-network-simulator/releases).  
+   Alternatively, you can use [`git-subrepo`](https://github.com/ingydotnet/git-subrepo) to clone this repository into a subdirectory of your project.
+
+2. Unpack into your project directory, so it looks something like
 
        <my-project>
        ├─ ...
-       └─ pyloric-network-simulator
+       └─ pyloric_simulator
+          ├─ config/
           ├─ prinz2004.py
           ├─ requirements.txt
           └─ ...
@@ -75,16 +91,21 @@ Since the documentation is inlined with the code, we recommend including the sou
        <my-project>
        ├─ ...
        └─ lib
-          └─ pyloric-network-simulator
+          └─ pyloric_simulator
+             ├─ config/
              ├─ prinz2004.py
              ├─ requirements.txt
              └─ ...
 
+3. Install the requirements
+
+   pip install -r ./pyloric_simulator/requirements.txt
+
 4. Add the contents of `requirements.txt` to your own dependencies.
 
-5. To use the `prinz2004` module, just import as you would any of your own modules.
+To use the `prinz2004.py` module, just import it as you would any of your own modules.
 
-### Alternative: Separate package
+### Alternative: Standalone package
 
 If you want to develop the simulator, you may prefer to clone the repository and make it a dependency to your project.
 
@@ -103,6 +124,20 @@ If you want to develop the simulator, you may prefer to clone the repository and
 ## Usage
 
 See the documentation.
+
+## Building the documentation
+
+Ensure the *.md* and *.py* files are synchronized
+
+    jupytext --sync prinz2004.md
+
+Build the documentation
+
+    jb build prinz2004.md
+
+Push to GitHub Pages
+
+
 
 [^model-def]:
     • Prinz, A. A., Bucher, D. & Marder, E. *Similar network activity from disparate circuit parameters.* Nature Neuroscience 7, 1345–1352 (2004). [doi:10.1038/nn1352](https://doi.org/10.1038/nn1352)  
