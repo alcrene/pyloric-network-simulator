@@ -9,4 +9,3 @@ scitying
 pandas
 holoviews
 addict
-pint

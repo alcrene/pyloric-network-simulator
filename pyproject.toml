@@ -52,11 +52,12 @@ dependencies = [
     "pandas",
     "holoviews",
     "scityping",
-    "pint",
 ]
 
 [project.optional-dependencies]
-docs = ["jupyter-book", "jupytext", "matplotlib", "watermark"]
+docs = ["jupyter-book", "jupytext",
+        "matplotlib", "pint", "watermark",
+        "ghp-import"]
 
 [project.urls]
 "Source" = "https://github.com/alcrene/pyloric-network-simulator"
