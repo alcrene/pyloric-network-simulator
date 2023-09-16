@@ -62,17 +62,50 @@ math:
 
 +++
 
-This is an implementation of the three-cell model of crustacean stomatogastric ganglion described in {cite:t}`marderModelingSmallNetworks1998` and used by {cite:t}`prinzSimilarNetworkActivity2004` to demonstrate that disparate parameter sets lead to comparable network activity.
+This is an implementation of the three-cell model of crustacean stomatogastric ganglion described in {cite:t}`marderModelingSmallNetworks1998` and used by {cite:t}`prinzSimilarNetworkActivity2004` to demonstrate that disparate parameter sets lead to comparable network activity. The main features of this particular implementation are:
+
+JAX-accelerated Python implementation
+~ Combines the flexibility of Python with the speed of compiled JAX code.
+
+Modularity
+~ New cell types are defined simply by extending Python arrays for the ion channel parameters.  
+  If needed, an arbitrary function for can also be given for specific ion channels.
+
+Flexibility
+~ You are not limited to the published three-cell network: studying a smaller two-cell network, or a larger one with different LP cells, is a simple matter of changing three arrays.
+
+All-in-one documentation
+~ The original specification of the pyloric circuit model is spread across at least three resources[^model-def].  
+  Here all definitions are included in the inlined documentaiton, are fully referenced and use standardized notation.
+
+Single source of truth
+~ Both the documentation and the code use the same source for parameter values, so you can be sure the documentated values are actually those used in the code. 
+~ In cases where this was not practical, Python values are specified with a string identical to the source of the documentation’s Markdown table.
+  Agreement between documentation and code is can be checked at any time by [“diff”-ing](https://linuxhandbook.com/diff-command/) the markdown and Python sources, or copy-pasting one onto the other.
+
+[^model-def]: Original references for the pyloric circuit model:  
+    • Prinz, A. A., Bucher, D. & Marder, E. *Similar network activity from disparate circuit parameters.* Nature Neuroscience 7, 1345–1352 (2004). [doi:10.1038/nn1352](https://doi.org/10.1038/nn1352)  
+    • Prinz, A. A., Billimoria, C. P. & Marder, E. *Alternative to Hand-Tuning Conductance-Based Models: Construction and Analysis of Databases of Model Neurons.*
+      Journal of Neurophysiology 90, 3998–4015 (2003). [doi:10.1152/jn.00641.2003](https://doi.org/10.1152/jn.00641.2003)  
+    • Marder, E. & Abbott, L. F. *Modeling small networks.* in Methods in neuronal modeling: from ions to networks (eds. Koch, C. & Segev, I.) (MIT Press, 1998).
 
 ```{code-cell} ipython3
-:tags: [remove-cell]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [remove-cell]
+---
 from __future__ import annotations
 ```
 
 ```{code-cell} ipython3
-:tags: [hide-input]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [hide-input]
+---
 import logging
 import shelve
 import re
@@ -93,6 +126,7 @@ from numpy import exp
 from numpy.typing import ArrayLike
 from scipy import integrate
 from addict import Dict
+from myst_nb import glue
 
 from scityping.numpy import Array
 
@@ -135,8 +169,13 @@ except ImportError:
 ```
 
 ```{raw-cell}
-:tags: [hide-input]
-
+---
+editable: true
+raw_mimetype: ''
+slideshow:
+  slide_type: ''
+tags: [hide-input]
+---
     logger.info("You may want to install JaX, which allows for >10x faster integration of the neuron model. "
                 "Falling back to a pure NumPy implementation.")
     # Import jax_shim, which is packaged alongside
@@ -152,20 +191,30 @@ except ImportError:
 ```
 
 ```{code-cell} ipython3
-:tags: [active-ipynb, remove-input]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [active-ipynb, remove-input]
+---
 import pint
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
 
 from scipy import integrate
 hv.extension("matplotlib", "bokeh")
+
+from jb_fixes import display_dataframe_with_math
 # Notebook-only imports
 ```
 
 ```{code-cell} ipython3
-:tags: [remove-cell]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [remove-cell]
+---
 __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 ```
 
@@ -189,8 +238,6 @@ Instantiate a new model by specifying:
 - The connectivity `gs` between populations
 - The set of membrane conductances for each type `g_cond`.  
   The 16 sets which define the neuron models used in {cite:t}`prinzSimilarNetworkActivity2004` are provided in `neuron_models`.
-
-(Note that PD and AB populations are automatically merged into AB/PD, which is why in the example, `gs` and `g_ion` only have three entries.)
 
 +++
 
@@ -249,7 +296,7 @@ The time points we provide to `model` are only those which are recorded; they ha
 res = model(np.linspace(3000, 4000, 1001))
 ```
 
-Results are returned as a `SimResult` object, which has attributes to retrieve the different traces: membrane voltage `V`, calcium concentration `Ca`, synaptic activation `s`, membrane activation `m` and membrane inactivation `h`.
+Results are returned as a [`SimResult`](simresult-object) object, which has attributes to retrieve the different traces: membrane voltage `V`, calcium concentration `Ca`, synaptic activation `s`, membrane activation `m` and membrane inactivation `h`.
 These are returned as Pandas DataFrames.
 :::{admonition} TODO
 :class: caution, margin
@@ -281,7 +328,7 @@ Vtraces.plot("AB")  # Simple plot using the DataFrame method
 hv.Curve(Vtraces.loc[:,"AB"]) + hv.Curve(Vtraces.loc[:,"LP"]) + hv.Curve(Vtraces.loc[:,"PY"])
 ```
 
-To inspect the initialization curves, we use the private method `thermalize`; this is used internally to generate the thermalized state. It returns a `SimResult` object.
+To inspect the initialization curves, we use the private method [`thermalize`](prinz2004-object); this is used internally to generate the thermalized state. It returns a [`SimResult`](simresult-object) object.
 (NB: Since during thermalization, we disconnect all neurons to get each’s individual spontaneous activity, it is only necessary to simulate one neuron per population. This is why the result returned by `thermalize` always has population sizes of 1.)
 
 ```{code-cell} ipython3
@@ -754,8 +801,11 @@ Differences in these values is what differentiates neuron models.
 ::::
 
 ```{code-cell} ipython3
-:tags: [remove-cell]
-
+---
+jupyter:
+  source_hidden: true
+tags: [remove-cell]
+---
 g_cond_text = r"""
 * - Model neuron
   - $g(I_\mathrm{Na})$
@@ -918,7 +968,7 @@ g_cond = pd.DataFrame(g_cond, index=_neuron_models, columns=_channels)
 neuron_models = g_cond
 ```
 
-+++ {"tags": ["remove-cell"]}
++++ {"tags": ["remove-cell"], "editable": true, "slideshow": {"slide_type": ""}}
 
 :::{hint}
 `g_cond` is a Pandas DataFrame. To get the vector for a particular neuron model, use the `.loc` accessor:
@@ -943,7 +993,29 @@ Name: AB/PD 1, dtype: float64
 
 ### Voltage-dependent activation variables
 
-+++
+```{raw-cell}
+---
+editable: true
+raw_mimetype: ''
+slideshow:
+  slide_type: ''
+tags: [remove-cell]
+---
+The placement of the note below, while not optimal, at least protects the table from being hidden by the table of contents.
+The custom "opaque" class ensures the note is displayed on top of the table when unrolled.
+```
+
++++ {"editable": true, "slideshow": {"slide_type": ""}}
+
+:::{note}
+:class: margin dropdown opaque
+
+- When $a = 0$, the values of $b$ and $c$ are irrelevant, but we should not use $c=0$ to avoid dividing by zero.
+- The $h$ current is not used for $I_\KCa$, $I_\Kd$ and $I_H$. Because we use vectorized operations, the computations are still performed, but the result is afterwards discarded. (`h_slice` is used to select only those channels with an $h$ variable.)
+- The variable $τ_m(I_H)$ is defined purely in terms of $y$. We do this by setting $σ=0$ and $C=1$.
+:::
+
++++ {"editable": true, "slideshow": {"slide_type": ""}}
 
 To implement the voltage equations in code, we write them as
 \begin{align*}
@@ -954,17 +1026,7 @@ where $x$ is one of $m_\infty$, $h_\infty$, $τ_m$ or $τ_h$.
 This form allows us to implement them as almost entirely vectorized operations, which calculate all activation variables simultaneously.
 Only the $y(V, \bigl[\Ca^{2+}\bigr])$ function requires a loop over the five channel types for which it is non-zero
 
-+++
-
-:::{note}
-:class: margin
-
-- When $a = 0$, the values of $b$ and $c$ are irrelevant, but we should not use $c=0$ to avoid dividing by zero.
-- The $h$ current is not used for $I_\KCa$, $I_\Kd$ and $I_H$. Because we use vectorized operations, the computations are still performed, but the result is afterwards discarded. (`h_slice` is used to select only those channels with an $h$ variable.)
-- The variable $τ_m(I_H)$ is defined purely in terms of $y$. We do this by setting $σ=0$ and $C=1$.
-:::
-
-+++
++++ {"editable": true, "slideshow": {"slide_type": ""}, "tags": ["remove-cell"]}
 
 :::{list-table} Voltage dependence - $a, b, c, C$
 :header-rows: 1
@@ -1014,8 +1076,14 @@ Only the $y(V, \bigl[\Ca^{2+}\bigr])$ function requires a loop over the five cha
 :::
 
 ```{code-cell} ipython3
-:tags: [remove-cell]
-
+---
+editable: true
+jupyter:
+  source_hidden: true
+slideshow:
+  slide_type: ''
+tags: [remove-cell]
+---
 act_text_params = """
 * -
   - minf
@@ -1077,20 +1145,35 @@ act_params_styled = act_params.style \
             {"selector": "th.col_heading.level1.col3,th.col_heading.level1.col7,th.col_heading.level1.col11", "props": "text-align: left; padding: 0 0 0 1em;"},
             {"selector": "th.col_heading.level0", "props": "text-align: center; margin-right: 2em; margin-left: 0.2em; border-bottom: solid black 1px"},
             {"selector": "th.col_heading.level1", "props": "text-align: center;"},
-            {"selector": "td", "props": "text-align: right;"}
+            {"selector": "td", "props": "text-align: right; padding: 0 .5em"}
         ]) \
     .format(align_sep(2))
 ```
 
 ```{code-cell} ipython3
-:tags: [active-ipynb, remove-input]
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [remove-input, active-ipynb]
+---
+glue("tbl_act_params", display_dataframe_with_math(act_params_styled), display=False)
+```
 
-act_params_styled
++++ {"editable": true, "slideshow": {"slide_type": ""}, "tags": ["remove-input", "active-ipynb"]}
+
+```{glue:figure} tbl_act_params
+
+Voltage dependence - $a, b, c, C$
 ```
 
 ```{code-cell} ipython3
-:tags: [remove-cell]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [remove-cell]
+---
 # Convert the parameter dataframe to a set of plain arrays (one array per param)
 # — During computations we want to use plain arrays to avoid overhead
 # NB: The columns get re-sorted after `stack`: we need to sort them back to the original order,
@@ -1258,11 +1341,16 @@ Unfortunately {cite:t}`prinzSimilarNetworkActivity2004` do not seem to document 
 [^also-diff-sign]: As for the [chemical synapses](sec_chem-synapse-model), we invert the sign to match the convention in {cite:t}`prinzSimilarNetworkActivity2004`.
 
 ```{code-cell} ipython3
-:tags: [remove-input, active-ipynb]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [remove-input, active-ipynb]
+---
 _ = ["AB", "PD1", "PD2"]
 _ = np.array([["0" if post==pre else f"{post} - {pre}" for pre in _] for post in _])
-pd.DataFrame(_, index=pd.Index(["AB", "PD1", "PD2"], name="post ↓"), columns=pd.Index(["AB", "PD1", "PD2"], name="pre →")).style.set_caption("$V_{\mathrm{post}} - V_{\mathrm{pre}}$ matrix")
+_ = pd.DataFrame(_, index=pd.Index(["AB", "PD1", "PD2"], name="post ↓"), columns=pd.Index(["AB", "PD1", "PD2"], name="pre →")).style.set_caption("$V_{\mathrm{post}} - V_{\mathrm{pre}}$ matrix")
+display_dataframe_with_math(_)
 ```
 
 (sec_chem-synapse-model)=
@@ -1272,10 +1360,19 @@ The chemical synapse model is defined in {cite:t}`prinzSimilarNetworkActivity200
 
 [^diff-sign]:  In particular that the two references use different conventions for the sign of $I_s$, which affects the sign in Eq. {eq}`eq-prinz-model-conductance`.
 
-+++
++++ {"editable": true, "slideshow": {"slide_type": ""}}
 
-:::{note}
-:class: margin
+$$\begin{align*}
+I_s &= g_s s (\Vpost - E_s) \\
+\frac{ds}{dt} &= \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s} \\
+\sinf\bigl(\Vpre\bigr) &= \frac{1}{1 + \exp\bigl((\Vth - \Vpre)/Δ\bigr)} \\
+τ_s &= \frac{1 - \sinf\bigl(\Vpre\bigr)}{\km}
+\end{align*}$$
+
++++ {"editable": true, "slideshow": {"slide_type": ""}}
+
+:::{admonition} Note on numerical stability
+:class: note dropdown
 
 These are the equations as reported in {cite:t}`prinzSimilarNetworkActivity2004`, but as-is they are numerically unstable because $s$ should stay bounded between 0 and 1. The equations ensure this by assuming infinitely precise integration: as $s_\infty$ approaches 1, $τ_s$ goes to zero and $ds/dt$ diverges. Diverging derivatives cause a numerical integrator to stall, since it must make smaller and smaller time steps in order to maintain precision.
 
@@ -1286,19 +1383,10 @@ In the [implementation](sec-prinz-model-implementation) below, we mitigate this 
    \begin{equation*}\frac{d\tilde{s}}{dt} = \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s \,s (1 - s) + ε} \,.\end{equation*}
 :::
 
-+++
++++ {"editable": true, "slideshow": {"slide_type": ""}}
 
-$$\begin{align*}
-I_s &= g_s s (\Vpost - E_s) \\
-\frac{ds}{dt} &= \frac{\sinf\bigl(\Vpre\bigr) - s}{τ_s} \\
-\sinf\bigl(\Vpre\bigr) &= \frac{1}{1 + \exp\bigl((\Vth - \Vpre)/Δ\bigr)} \\
-τ_s &= \frac{1 - \sinf\bigl(\Vpre\bigr)}{\km}
-\end{align*}$$
-
-+++
-
-:::{note} Memory layout of synapse variables
-:class: dropdown
+:::{admonition} Memory layout of synapse variables
+:class: note dropdown
 
 We have two types of synapses, *glutamatergic* and *cholinergic*, and an undetermined number of neurons. To take advantage of vectorized operations, we group synapse variables according to synapse type: since parameters are then constant within each group, we can treat them as scalars, and broadcasting works with any size of voltage vector $V$.
 
@@ -1421,10 +1509,16 @@ syn_constants = pd.DataFrame.from_dict(
 ```
 
 ```{code-cell} ipython3
-:tags: [active-ipynb]
-
+---
+editable: true
+slideshow:
+  slide_type: ''
+tags: [active-ipynb]
+---
 syn_constants
 ```
+
++++ {"editable": true, "slideshow": {"slide_type": ""}}
 
 (sec-prinz-circuit-model)=
 ## Circuit model
@@ -1439,10 +1533,10 @@ The circuit used in {cite:t}`prinzSimilarNetworkActivity2004` is composed of thr
   - Number of cells
 * - AB/PD  
     "pacemaker kernel"
-  - pyloric dilator  
-    anterior bursting
-  - PD: 2  
-    AB: 1
+  - anterior bursting  
+    pyloric dilator
+  - AB: 1  
+    PD: 2
 * - LP
   - lateral pyloric
   - 1
@@ -1459,7 +1553,7 @@ In {cite:t}`prinzSimilarNetworkActivity2004` the AB and PD are lumped together i
 Circuit diagram of the pyloric network, reproduced from Fig. 1 of {cite:t}`prinzSimilarNetworkActivity2004`.
 :::
 
-+++
++++ {"editable": true, "slideshow": {"slide_type": ""}}
 
 Network connectivity is determined by the synapse strength $g_s$. In {cite:t}`prinzSimilarNetworkActivity2004`, this parameter takes one of the following values:
 
@@ -1494,7 +1588,9 @@ The `dX` implementation is written such that as many operations as possible are 
 ::::{admonition} Memory layout of $X$
 :class: dropdown
 
-Each column of $X$ represents a different neuron. (Some of the $h$ variables are in fact always zero, but for simplicity and to allow better vectorization, we include them in $X$.)
+The $X$ vector is in fact a flattened 2d array, where each column represents a different neuron. (Some of the $h$ variables are in fact always zero, but for simplicity and to allow better vectorization, we include them in $X$.)
+ 
+Any code which receives $X$ in vector form can reconstruct the 2d array with `X.reshape(-1,N)`. Reshaping is an extremely cheap operation since it doesn’t require moving any data, and accessing either rows or columns is fast thanks to NumPy’s efficient indexing.
 
 :::{list-table}
 
@@ -1780,18 +1876,21 @@ def dX(t, X,
 (sec-initialization)=
 ## Initialization
 
-For the experiments, we want to initialize models in a steady state. To find this steady state, we first need to run the model, generally for much longer than the amount of simulation time we need for the experiment itself. So we definitely don’t want to do this every time, so after simulating a model, we store the initial state in a cache on the disk. Thus we distinguish between two types of initialization:
+For the experiments, we want to initialize models in a steady state. To find this steady state, we first need to run the model, generally for much longer than the amount of simulation time we need for the experiment itself. We definitely don’t want to do this every time, so after simulating a model, we store the initial state in a cache on the disk. Thus we distinguish between two types of initialization:
 
 Cold initialization
-~ This is a fixed initial state used for all models, when no previous simulations are available. It is used for the initialization run, which
+~ This is a fixed initial state used for all models, when no previous simulations are available. It is used for the thermalization run, which
   integrates the model until it reaches a steady state.
-  During this initialization run, the model is disconnected (all connectivities $g_s$ are set to 0) and receives no external input.
-  This is done to allow neurons to reach a steady state, and mirrors the procedure followed by {cite:t}`prinzAlternativeHandTuningConductanceBased2003`.
 
 Thermalized (“warm”) initialization
 ~ The final state of the initialization run is the thermalized initialization. 
   Subsequent calls with the same model will retrieve this state from the cache.
   
+During the thermalizaton run, the model is disconnected (all connectivities $g_s$ are set to 0) and receives no external input;
+this mirrors the procedure followed by {cite:t}`prinzAlternativeHandTuningConductanceBased2003`.
+If we did not disconnect neurons, many of them would never reach a steady state since the circuit is designed to spontaneously oscillate.
+Moreover, one would need to generate and store a different initialization for each circuit, rather than for each neuron, which is combinatorially many more.
+
 Cold initialization values are provided by on p. 4001 of {cite:t}`prinzAlternativeHandTuningConductanceBased2003`:[^cold-init-s]
 
 :::{list-table} Cold initialization
@@ -1807,11 +1906,11 @@ Cold initialization values are provided by on p. 4001 of {cite:t}`prinzAlterna
   - 0
 :::
 
-There are four main differences between our procedure and that of {cite:t}`prinzSimilarNetworkActivity2004`:
+There are four main technical differences between our procedure and that of {cite:t}`prinzSimilarNetworkActivity2004`:
 
 - For numerical stability, we track the values of $\logit m$, $\logit h$ and $\logit s$. This means we can’t initialize them exactly at 0 or 1; instead we use $\logit m = \logit s = -10$ and $\logit h = 10$, which correspond to approximately $m = s = 10^{-5}$ and $h = 10^5$.
 
-- {cite:t}`prinzSimilarNetworkActivity2004` set $s=0$ after the thermalization. This is presumably because the original neuron model catalog did not include simulations of $s$. In our case, we set $s=0$ for the cold initialization, and use it’s subsequent thermalized value for the data run. This is both simpler on the implementation side, and more consistent with the desire to let all spontaneous transients relax before connecting neurons.
+- {cite:t}`prinzSimilarNetworkActivity2004` set $s=0$ after the thermalization. This is presumably because the original neuron model catalog did not include simulations of $s$. In our case, we set $s=0$ for the cold initialization, and use its subsequent thermalized value for the data run. This is both simpler on the implementation side, and more consistent with the desire to let all spontaneous transients relax before connecting neurons.
 
 - We don’t first compute the thermalization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, each thermalization run is identified by a `g_cond` matrix – $g_s$ and $I_{\mathrm{ext}}$ are ignored, since they are set to zero during thermalization.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.
 
@@ -1819,19 +1918,27 @@ There are four main differences between our procedure and that of {cite:t}`prinz
 
 [^cold-init-s]: Except for $s$, which is initialized to 0 based on the section *Network simulation and classification* of {cite:t}`prinzSimilarNetworkActivity2004`. In any case, since we set the value of $g_s$ to 0 during the initialization run, the initial value we choose for $s$ is not important.
 
+The main *practical* difference is that instead of pre-computing a neuron catalogue, the thermalization is done completely automatically and on-demand. For the user therefore it makes no difference whether a warm initialization for a particular circuit is available or not: when they request a simulation, if no warm initialization is available, they just need to wait longer to get their result. Subsequent runs then reuse the warm initialization computed on the first run.
+
 **Implementation**
 - The cold initialization is given by the class method `State.cold_initialized`.
 - The warm-up simulation is implemented in the method `Prinz2004.get_thermalization`.
 
-Three class attributes of `Prinz2004` are used to control the behaviour of the warm-up simulation:
+Three class attributes of [`Prinz2004`](prinz2004-object) are used to control the behaviour of the warm-up simulation:
 
 - `__thermalization_store__` determines where the cache is stored on disk.
 - `__thermalization_time__` is the warm-up simulation time; it is currently set to 5s.
-- `__thermalization_time_step__` is the recording time step for the warm-up simulation. This is only relevant for inspecting the warm-up run.
+- `__thermalization_time_step__` is the recording time step for the warm-up simulation. This is only relevant for inspecting the warm-up run. (The integrator uses an adaptive time step and discards non-recorded steps.)
 
 +++
 
 ## Public API
+
+### `State` object
+
+In order to integrate the model equations, we need to know not just the membrane potential of each neuron, but also its calcium concentration, synaptic variable ($s$) and activation and inactivation variables ($m$, $h$). These are stored together in a `State` object, which also provides
+- automatic conversion to/from log-transformed values;
+- convenience methods for converting between different storage layouts, for example concatening and flattening all variables for the ODE integrator.
 
 ```{code-cell} ipython3
 @dataclass
@@ -1842,8 +1949,16 @@ class State:
     logitm: Array[float, 2]  # (n_neurons, n_channels)
     logith: Array[float, 2]  # (n_neurons, n_channels)
 
+    """Storage container for simulator variables.
+
+    - Handles automatic conversion to/from log-transformed values.
+    - Provides methods for converting between storage layouts, in particular for
+    exporting to the 1-d vector format required by ODE integrators.
+    """
+
     @classmethod
     def cold_initialized(cls, n_neurons):
+        """Default state initialization. Used to initialize the thermalization run."""
         return cls(
             -50   * jnp.ones(n_neurons),
             jnp.log(0.05) * jnp.ones(n_neurons),
@@ -1903,6 +2018,12 @@ class State:
         self.logCa = np.exp(Ca)
 ```
 
+(simresult-object)=
+### `SimResult` object
+
+The ODE integrators treat the data as a flat 1-D vector, which is not convenient for associating the trace of each component to the correct state variable.
+A `SimResult` stores the data returned from the integrator, in the integrator’s compact format, but provides a human-friendly interface for retrieving traces for individual variables. Conversions to/from log-transformed values are handled automatically.
+
 ```{code-cell} ipython3
 @dataclass
 class SimResult:
@@ -1910,6 +2031,12 @@ class SimResult:
     data      : Array[float, 3]
     pop_slices: List[slice]
     
+    """Stores and makes accessible the results of a simulation run.
+
+    Underlying storage is very close to the output of the ODE simulator.
+    Properties for each variable (`V`, `logCa`, `Ca`, etc.) retrieve the correct rows from the data structure.
+    """
+
     def __post_init__(self):
         self.data = self.data.reshape(3+len(channels)+nhchannels, -1, len(self.t))
         self.data = np.moveaxis(self.data, -1, 0)  # Both Pandas & Holoviews work better if time is the index axis
@@ -1951,6 +2078,11 @@ class SimResult:
         return pd.DataFrame(data, index=pd.Index(self.t, name="time"), columns=cols)
 ```
 
+(prinz2004-object)=
+### `Prinz2004` object
+
+This is the core simulator class. To perform a simulation, create an instance of this class and call its `integrate` method.
+
 ```{code-cell} ipython3
 @dataclass(frozen=True)
 class Prinz2004:
@@ -1958,6 +2090,11 @@ class Prinz2004:
     gs         : Array[float, 2]
     g_ion: Optional[Array[float, 2]]=None
     ge         : float=1.  # Currently only used to turn on/off electrical connectivity
+
+    """ Core simulator class.
+
+    To perform a simulation, create an instance of this class and call its `integrate` method.
+    """
     
     # Private attributes
     __thermalization_store__ : ClassVar[Path] = config.paths.simresults/"prinz2004_thermalize"
@@ -1980,16 +2117,6 @@ class Prinz2004:
         res = self.integrate(0, X0, t_array, I_ext)
         return SimResult(t_array, res.y, self.pop_slices)
     
-    # @property
-    # def key(self):
-    #     """
-    #     Hashable key which uniquely identifies this model. This is not the key used to check the thermalization cache.
-    #     """
-    #     return (tuple(self.pop_sizes.items()),
-    #             tuple(tuple(row) for row in self.gs),
-    #             self.g_cond.to_csv(),
-    #             self.ge)
-   
     def derivative(self, t: float, X: State, I_ext: Optional[Callable]=None):
         """
         Evaluate the model equations, returning the derivative at `t` if the state is `X`.

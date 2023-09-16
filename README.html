@@ -35,6 +35,7 @@
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
     <link rel="stylesheet" type="text/css" href="_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
@@ -338,7 +339,7 @@ document.write(`
 <h1>Pyloric network simulator<a class="headerlink" href="#pyloric-network-simulator" title="Permalink to this heading">#</a></h1>
 <p>The pyloric circuit model described by Prinz at al.<a class="footnote-reference brackets" href="#model-def" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> continues to be studied today,
 both as an instructive model of an interesting biological process<a class="footnote-reference brackets" href="#prinz-research" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> and also as a case study of functional diversity in computational models.<a class="footnote-reference brackets" href="#goncalves2022" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a>
-The authors’ <a class="reference external" href="https://biology.emory.edu/research/Prinz/database-sensors/">also provide</a> their C/C++ implementation of the model.</p>
+The authors’ <a class="reference external" href="https://biology.emory.edu/research/Prinz/database-sensors/">also provide</a> their C++ implementation of the model.</p>
 <p>This repository is a reimplementation of the model in pure Python, using JAX to achieve comparable execution speeds as C/C++.</p>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">#</a></h2>
@@ -400,7 +401,7 @@ Use of JAX also opens the possibility of using GPU acceleration for models with 
 <h3>Limitation<a class="headerlink" href="#limitation" title="Permalink to this heading">#</a></h3>
 <p>The principal and very important disadvantage of this implementation is that currently it was only used for one example in one paper,
 in contrast to the original C/C++ implementation which has received many years of focussed attention.
-This implementaiton has <em>not</em> been exhaustively tested for consistency with the original.</p>
+This implementation has <em>not</em> been exhaustively tested for consistency with the original.</p>
 <ul class="simple">
 <li><p>Basic qualitative comparisons suggests that the single neuron conductance models closely reproduce the results reported by Prinz et al.</p></li>
 <li><p>Some differences in the simulated activity (wrt to the original implementation) do seem to occur when neuron models are combined into a circuit.</p></li>

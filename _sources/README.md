@@ -2,7 +2,7 @@
 
 The pyloric circuit model described by Prinz at al.[^model-def] continues to be studied today,
 both as an instructive model of an interesting biological process[^prinz-research] and also as a case study of functional diversity in computational models.[^goncalves2022]
-The authors’ [also provide](https://biology.emory.edu/research/Prinz/database-sensors/) their C/C++ implementation of the model.
+The authors’ [also provide](https://biology.emory.edu/research/Prinz/database-sensors/) their C++ implementation of the model.
 
 This repository is a reimplementation of the model in pure Python, using JAX to achieve comparable execution speeds as C/C++.
 
@@ -51,7 +51,7 @@ This repository is a reimplementation of the model in pure Python, using JAX to 
 
 The principal and very important disadvantage of this implementation is that currently it was only used for one example in one paper,
 in contrast to the original C/C++ implementation which has received many years of focussed attention.
-This implementaiton has *not* been exhaustively tested for consistency with the original.
+This implementation has *not* been exhaustively tested for consistency with the original.
 
 - Basic qualitative comparisons suggests that the single neuron conductance models closely reproduce the results reported by Prinz et al.
 - Some differences in the simulated activity (wrt to the original implementation) do seem to occur when neuron models are combined into a circuit.
