@@ -129,7 +129,7 @@ logger = logging.getLogger(__name__)
 from .config import config
 try:
     import jax
-    #from jax import config as jax_config; jax_config.update("jax_enable_x64", True); del jax_config
+    from jax import config as jax_config; jax_config.update("jax_enable_x64", True); del jax_config
     import jax.numpy as jnp
 except ImportError:
     from . import jax_shim as jax
