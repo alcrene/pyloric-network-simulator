@@ -13,7 +13,7 @@
 #     name: pyloric-network
 # ---
 
-# %% [markdown] tags=["remove-cell"]
+# %% [markdown] tags=["remove-cell"] editable=true slideshow={"slide_type": ""}
 # ---
 # authors:
 #   - name: Alexandre René
@@ -1741,7 +1741,7 @@ def dX(t, X,
 #   - 0
 # :::
 #
-# There are four main technical differences between our procedure and that of {cite:t}`prinzSimilarNetworkActivity2004`:
+# There are five main technical differences between our procedure and that of {cite:t}`prinzSimilarNetworkActivity2004`:
 #
 # - For numerical stability, we track the values of $\logit m$, $\logit h$ and $\logit s$. This means we can’t initialize them exactly at 0 or 1; instead we use $\logit m = \logit s = -10$ and $\logit h = 10$, which correspond to approximately $m = s = 10^{-5}$ and $h = 10^5$.
 #
@@ -1749,11 +1749,14 @@ def dX(t, X,
 #
 # - We don’t first compute the thermalization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, each thermalization run is identified by a `g_cond` matrix – $g_s$ and $I_{\mathrm{ext}}$ are ignored, since they are set to zero during thermalization.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.
 #
+# - Instead of fixed-step Euler integration, we use the Runge-Kutta 4(5) algorithm with adaptive step sizes included in `scipy.integrate`. This is not only more efficient than Euler, but also allows one to estimate numerical errors.
+#   (Although the integration scheme is currently hard-coded, since we are using standard `scipy` integrators, it would be easy enough to change it or make it user-configurable. Indeed, while standard, RK45 is not necessarily the best choice for Hodgkin-Huxley systems since they are moderately stiff.)
+#
 # - Finally, instead of detecting the steady state automatically, we use a fixed integration time and rely on visual inspection to determine whether this is enough to let transients decay in all considered models. Again we can do this because we only need to simulate a handful of models.
 #
 # [^cold-init-s]: Except for $s$, which is initialized to 0 based on the section *Network simulation and classification* of {cite:t}`prinzSimilarNetworkActivity2004`. In any case, since we set the value of $g_s$ to 0 during the initialization run, the initial value we choose for $s$ is not important.
 #
-# The main *practical* difference is that instead of pre-computing a neuron catalogue, the thermalization is done completely automatically and on-demand. For the user therefore it makes no difference whether a warm initialization for a particular circuit is available or not: when they request a simulation, if no warm initialization is available, they just need to wait longer to get their result. Subsequent runs then reuse the warm initialization computed on the first run.
+# The main *practical* difference is that instead of pre-computing a neuron catalogue, the thermalization is done automatically and on-demand. For the user therefore it makes no difference whether a warm initialization for a particular circuit is available or not: when they request a simulation, if no warm initialization is available, they just need to wait longer to get their result. Subsequent runs then reuse the warm initialization computed on the first run.
 #
 # **Implementation**
 # - The cold initialization is given by the class method `State.cold_initialized`.
@@ -1856,7 +1859,7 @@ class State:
 # (simresult-object)=
 # ### `SimResult` object
 #
-# The ODE integrators treat the data as a flat 1-D vector, which is not convenient for associating the trace of each component to the correct state variable.
+# The ODE integrators provided by `scipy.integrate` treat the data as a flat 1-D vector, which is not convenient for associating the trace of each component to the correct state variable.
 # A `SimResult` stores the data returned from the integrator, in the integrator’s compact format, but provides a human-friendly interface for retrieving traces for individual variables. Conversions to/from log-transformed values are handled automatically.
 
 # %%

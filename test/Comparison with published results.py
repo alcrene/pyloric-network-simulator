@@ -30,8 +30,8 @@ import pint
 from types import SimpleNamespace
 from addict import Dict
 
-from prinz2004 import (Prinz2004, neuron_models, channels,
-                       act_vars, h_slice, nhchannels, constants)
+from pyloric_simulator.prinz2004 import (
+    Prinz2004, neuron_models, channels, act_vars, h_slice, nhchannels, constants)
 
 ureg = pint.UnitRegistry()
 ureg.default_format = "~P"
