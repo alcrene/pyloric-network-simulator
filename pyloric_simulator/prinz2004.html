@@ -2715,14 +2715,16 @@ Moreover, one would need to generate and store a different initialization for ea
 </tr>
 </tbody>
 </table>
-<p>There are four main technical differences between our procedure and that of <span id="id30">Prinz <em>et al.</em> [<a class="reference internal" href="../references.html#id4" title="Astrid A Prinz, Dirk Bucher, and Eve Marder. Similar network activity from disparate circuit parameters. Nature Neuroscience, 7(12):1345–1352, December 2004. doi:10.1038/nn1352.">2004</a>]</span>:</p>
+<p>There are five main technical differences between our procedure and that of <span id="id30">Prinz <em>et al.</em> [<a class="reference internal" href="../references.html#id4" title="Astrid A Prinz, Dirk Bucher, and Eve Marder. Similar network activity from disparate circuit parameters. Nature Neuroscience, 7(12):1345–1352, December 2004. doi:10.1038/nn1352.">2004</a>]</span>:</p>
 <ul class="simple">
 <li><p>For numerical stability, we track the values of <span class="math notranslate nohighlight">\(\logit m\)</span>, <span class="math notranslate nohighlight">\(\logit h\)</span> and <span class="math notranslate nohighlight">\(\logit s\)</span>. This means we can’t initialize them exactly at 0 or 1; instead we use <span class="math notranslate nohighlight">\(\logit m = \logit s = -10\)</span> and <span class="math notranslate nohighlight">\(\logit h = 10\)</span>, which correspond to approximately <span class="math notranslate nohighlight">\(m = s = 10^{-5}\)</span> and <span class="math notranslate nohighlight">\(h = 10^5\)</span>.</p></li>
 <li><p><span id="id31">Prinz <em>et al.</em> [<a class="reference internal" href="../references.html#id4" title="Astrid A Prinz, Dirk Bucher, and Eve Marder. Similar network activity from disparate circuit parameters. Nature Neuroscience, 7(12):1345–1352, December 2004. doi:10.1038/nn1352.">2004</a>]</span> set <span class="math notranslate nohighlight">\(s=0\)</span> after the thermalization. This is presumably because the original neuron model catalog did not include simulations of <span class="math notranslate nohighlight">\(s\)</span>. In our case, we set <span class="math notranslate nohighlight">\(s=0\)</span> for the cold initialization, and use its subsequent thermalized value for the data run. This is both simpler on the implementation side, and more consistent with the desire to let all spontaneous transients relax before connecting neurons.</p></li>
 <li><p>We don’t first compute the thermalization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, each thermalization run is identified by a <code class="docutils literal notranslate"><span class="pre">g_cond</span></code> matrix – <span class="math notranslate nohighlight">\(g_s\)</span> and <span class="math notranslate nohighlight">\(I_{\mathrm{ext}}\)</span> are ignored, since they are set to zero during thermalization.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.</p></li>
+<li><p>Instead of fixed-step Euler integration, we use the Runge-Kutta 4(5) algorithm with adaptive step sizes included in <code class="docutils literal notranslate"><span class="pre">scipy.integrate</span></code>. This is not only more efficient than Euler, but also allows one to estimate numerical errors.
+(Although the integration scheme is currently hard-coded, since we are using standard <code class="docutils literal notranslate"><span class="pre">scipy</span></code> integrators, it would be easy enough to change it or make it user-configurable. Indeed, while standard, RK45 is not necessarily the best choice for Hodgkin-Huxley systems since they are moderately stiff.)</p></li>
 <li><p>Finally, instead of detecting the steady state automatically, we use a fixed integration time and rely on visual inspection to determine whether this is enough to let transients decay in all considered models. Again we can do this because we only need to simulate a handful of models.</p></li>
 </ul>
-<p>The main <em>practical</em> difference is that instead of pre-computing a neuron catalogue, the thermalization is done completely automatically and on-demand. For the user therefore it makes no difference whether a warm initialization for a particular circuit is available or not: when they request a simulation, if no warm initialization is available, they just need to wait longer to get their result. Subsequent runs then reuse the warm initialization computed on the first run.</p>
+<p>The main <em>practical</em> difference is that instead of pre-computing a neuron catalogue, the thermalization is done automatically and on-demand. For the user therefore it makes no difference whether a warm initialization for a particular circuit is available or not: when they request a simulation, if no warm initialization is available, they just need to wait longer to get their result. Subsequent runs then reuse the warm initialization computed on the first run.</p>
 <p><strong>Implementation</strong></p>
 <ul class="simple">
 <li><p>The cold initialization is given by the class method <code class="docutils literal notranslate"><span class="pre">State.cold_initialized</span></code>.</p></li>
@@ -2828,7 +2830,7 @@ Moreover, one would need to generate and store a different initialization for ea
 </section>
 <section id="simresult-object">
 <span id="id32"></span><h3><code class="docutils literal notranslate"><span class="pre">SimResult</span></code> object<a class="headerlink" href="#simresult-object" title="Permalink to this heading">#</a></h3>
-<p>The ODE integrators treat the data as a flat 1-D vector, which is not convenient for associating the trace of each component to the correct state variable.
+<p>The ODE integrators provided by <code class="docutils literal notranslate"><span class="pre">scipy.integrate</span></code> treat the data as a flat 1-D vector, which is not convenient for associating the trace of each component to the correct state variable.
 A <code class="docutils literal notranslate"><span class="pre">SimResult</span></code> stores the data returned from the integrator, in the integrator’s compact format, but provides a human-friendly interface for retrieving traces for individual variables. Conversions to/from log-transformed values are handled automatically.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -3257,14 +3259,14 @@ A <code class="docutils literal notranslate"><span class="pre">SimResult</span><
 <tbody>
 <tr class="row-odd"><th class="stub"><p>9</p></th>
 <th class="stub"><p>3.10GHz CPU<br />
-(i5-5675C, 4 core)</p></th>
+(i5-5675C, 2 core)</p></th>
 <td><p>NumPy</p></td>
 <td><p>21.3 s</p></td>
 <td><p>2 min 49 s</p></td>
 </tr>
 <tr class="row-even"><th class="stub"><p>9</p></th>
 <th class="stub"><p>3.10GHz CPU<br />
-(i5-5675C, 4 core)</p></th>
+(i5-5675C, 2 core)</p></th>
 <td><p>JaX</p></td>
 <td><p>2.33 s</p></td>
 <td><p>0 min 7.54 s</p></td>
