@@ -109,7 +109,6 @@ from numpy import exp
 from numpy.typing import ArrayLike
 from scipy import integrate
 from addict import Dict
-from myst_nb import glue
 
 from scityping.numpy import Array
 
@@ -150,6 +149,7 @@ except ImportError:
 #     if this_dir: del sys.path[0]; del sys  # Return the namespace and sys.path to what they would be if we had not taken this branch
 
 # %% editable=true slideshow={"slide_type": ""} tags=["active-ipynb", "remove-input"]
+# from myst_nb import glue
 # import pint
 # ureg = pint.get_application_registry()
 # Q_ = ureg.Quantity
@@ -2281,13 +2281,13 @@ class Prinz2004:
 #   - 1000 ms
 # * - 9
 #   - 3.10GHz CPU  
-#     (i5-5675C, 4 core)
+#     (i5-5675C, 2 core)
 #   - NumPy
 #   - 21.3 s
 #   - 2 min 49 s
 # * - 9
 #   - 3.10GHz CPU  
-#     (i5-5675C, 4 core)
+#     (i5-5675C, 2 core)
 #   - JaX
 #   - 2.33 s
 #   - 0 min 7.54 s
