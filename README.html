@@ -363,7 +363,7 @@ The authors’ <a class="reference external" href="https://biology.emory.edu/res
 <li><p>Code structure closely follows how the model is defined in the papers, making it easier to understand each component.</p></li>
 <li><p>The entire model fits in a single code file.</p></li>
 <li><p>The code file can be opened in a Jupyter Notebook,<a class="footnote-reference brackets" href="#jupytext" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a> providing structure and formatted documentation explaining each code section in detail.<br />
-<img alt="Screenshot: Conductance model" src="_images/inlined-docs-1.png" />  <img alt="Screenshot: Constants" src="_images/inlined-docs-1.png" /></p></li>
+<img alt="Screenshot: Conductance model" src="_images/inlined-docs-1.png" />  <img alt="Screenshot: Constants" src="_images/inlined-docs-2.png" /></p></li>
 </ul>
 </li>
 <li><p>Easy to modify:</p>
@@ -401,7 +401,7 @@ Use of JAX also opens the possibility of using GPU acceleration for models with 
 <h3>Limitation<a class="headerlink" href="#limitation" title="Permalink to this heading">#</a></h3>
 <p>The principal and very important disadvantage of this implementation is that currently it was only used for one example in one paper,
 in contrast to the original C/C++ implementation which has received many years of focussed attention.
-This implementation has <em>not</em> been exhaustively tested for consistency with the original.</p>
+This implementation also has not been exhaustively tested for consistency with the original.</p>
 <ul class="simple">
 <li><p>Basic qualitative comparisons suggests that the single neuron conductance models closely reproduce the results reported by Prinz et al.</p></li>
 <li><p>Some differences in the simulated activity (wrt to the original implementation) do seem to occur when neuron models are combined into a circuit.</p></li>
@@ -480,7 +480,7 @@ Alternatively, you can use <a class="reference external" href="https://github.co
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h2>
-<p>See the documentation.</p>
+<p>See the <a class="reference external" href="https://alcrene.github.io/pyloric-network-simulator/pyloric_simulator/prinz2004.html">documentation</a>.</p>
 </section>
 <section id="building-the-documentation">
 <h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this heading">#</a></h2>

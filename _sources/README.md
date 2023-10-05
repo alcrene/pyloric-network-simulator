@@ -20,7 +20,7 @@ This repository is a reimplementation of the model in pure Python, using JAX to 
   - Code structure closely follows how the model is defined in the papers, making it easier to understand each component.
   - The entire model fits in a single code file.
   - The code file can be opened in a Jupyter Notebook,[^jupytext] providing structure and formatted documentation explaining each code section in detail.  
-    ![Screenshot: Conductance model](docs/inlined-docs-1.png)  ![Screenshot: Constants](docs/inlined-docs-1.png)
+    ![Screenshot: Conductance model](docs/inlined-docs-1.png)  ![Screenshot: Constants](docs/inlined-docs-2.png)
 - Easy to modify:
   - Users have full control over the circuit topology: number, size and type of populations, as well as the synaptic conductivities, are all specified when creating the model:
 
@@ -51,7 +51,7 @@ This repository is a reimplementation of the model in pure Python, using JAX to 
 
 The principal and very important disadvantage of this implementation is that currently it was only used for one example in one paper,
 in contrast to the original C/C++ implementation which has received many years of focussed attention.
-This implementation has *not* been exhaustively tested for consistency with the original.
+This implementation also has not been exhaustively tested for consistency with the original.
 
 - Basic qualitative comparisons suggests that the single neuron conductance models closely reproduce the results reported by Prinz et al.
 - Some differences in the simulated activity (wrt to the original implementation) do seem to occur when neuron models are combined into a circuit.
@@ -123,7 +123,7 @@ If you want to develop the simulator, you may prefer to clone the repository and
 
 ## Usage
 
-See the documentation.
+See the [documentation](https://alcrene.github.io/pyloric-network-simulator/pyloric_simulator/prinz2004.html).
 
 ## Building the documentation
 

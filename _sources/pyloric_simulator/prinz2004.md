@@ -126,7 +126,6 @@ from numpy import exp
 from numpy.typing import ArrayLike
 from scipy import integrate
 from addict import Dict
-from myst_nb import glue
 
 from scityping.numpy import Array
 
@@ -197,6 +196,7 @@ slideshow:
   slide_type: ''
 tags: [active-ipynb, remove-input]
 ---
+from myst_nb import glue
 import pint
 ureg = pint.get_application_registry()
 Q_ = ureg.Quantity
