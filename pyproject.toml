@@ -1,6 +1,6 @@
 [project]
 
-name = "pyloric-simulator"
+name = "pyloric-network-simulator"
 
 description = "Pure-Python, JAX-accelerate implementation of the pyloric circuit model described by Prinz et al (Nat. Neurosci., 2004)"
 
