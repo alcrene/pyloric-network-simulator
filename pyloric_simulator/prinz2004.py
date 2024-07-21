@@ -62,22 +62,27 @@
 #
 # JAX-accelerated Python implementation
 # ~ Combines the flexibility of Python with the speed of compiled JAX code.
+# ~ The specification of update equations for ion channels was carefully designed to maximize vectorization.
+#
+# Choice of ODE solver
+# ~ The official C++ implementation uses hard-coded Euler integration, which can make it vulnerable to numerical instabilities. (Neuron conductance-based models, after all, are stiff by design.)
+# ~ In contrast, this implementation is designed to be used with Python’s ODE solvers, making it easy to use a more appropriate solver. In particular, adaptive step solvers can dramatically reduce simulation time, while still keeping enough time precision to resolve spikes.
 #
 # Modularity
 # ~ New cell types are defined simply by extending Python arrays for the ion channel parameters.  
-#   If needed, an arbitrary function for can also be given for specific ion channels.
+#   If needed, an arbitrary function can also be given for specific ion channels.
 #
 # Flexibility
 # ~ You are not limited to the published three-cell network: studying a smaller two-cell network, or a larger one with different LP cells, is a simple matter of changing three arrays.
 #
 # All-in-one documentation
 # ~ The original specification of the pyloric circuit model is spread across at least three resources[^model-def].  
-#   Here all definitions are included in the inlined documentaiton, are fully referenced and use standardized notation.
+#   Here all definitions are included in the inlined documentaiton, are fully referenced and use consistent notation.
 #
 # Single source of truth
 # ~ Both the documentation and the code use the same source for parameter values, so you can be sure the documentated values are actually those used in the code. 
 # ~ In cases where this was not practical, Python values are specified with a string identical to the source of the documentation’s Markdown table.
-#   Agreement between documentation and code is can be checked at any time by [“diff”-ing](https://linuxhandbook.com/diff-command/) the markdown and Python sources, or copy-pasting one onto the other.
+#   Agreement between documentation and code can be checked at any time by [“diff”-ing](https://linuxhandbook.com/diff-command/) the markdown and Python code blocks, or copy-pasting one onto the other.
 #
 # [^model-def]: Original references for the pyloric circuit model:  
 #     • Prinz, A. A., Bucher, D. & Marder, E. *Similar network activity from disparate circuit parameters.* Nature Neuroscience 7, 1345–1352 (2004). [doi:10.1038/nn1352](https://doi.org/10.1038/nn1352)  
