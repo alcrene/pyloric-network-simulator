@@ -35,7 +35,8 @@ It is especially meant for users who want to modify the code themselves, or inte
       of memory, and limits later simulations to those parameters for which we have thermalizations.
     - The Brian and xolotl implementations are meant as illustrative examples, and to the best of my understanding
       don’t perform any thermalization.
-    - Here models are thermalized on demand each time a new parameter combination is used.
+    - Here models are thermalized on demand the first time a new parameter combination is used.
+      The result is then saved to an on-disk cache (managed with `shelve`).
       This makes thermalizations completely transparent to the user (modulo a 5–10 min wait time) and ensures that
       it is performed only on those models which we actually need. This is a much more efficient approach if
       + We will need to execute the model with a limited number of parameters (e.g. because the parameter ranges we
