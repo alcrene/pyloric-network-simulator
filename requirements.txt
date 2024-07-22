@@ -5,7 +5,7 @@ jax[cpu]
 flufl.lock
 
 ## Conveniences – code could be rewritten to remove these ##
-scitying
+scityping
 pandas
 holoviews
 addict
