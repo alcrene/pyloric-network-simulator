@@ -1,0 +1,788 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+    <title>GitHub to PyPI in 30 minutes &#8212; Pyloric network simulator</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-thebe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script>const THEBE_JS_URL = "https://unpkg.com/thebe@0.8.2/lib/index.js"
+const thebe_selector = ".thebe,.cell"
+const thebe_selector_input = "pre"
+const thebe_selector_output = ".output, .cell_output"
+</script>
+    <script async="async" src="../../_static/sphinx-thebe.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '.github/workflows/README';</script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search this book..."
+         aria-label="Search this book..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../pyloric_simulator/prinz2004.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">Pyloric network simulator</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        
+        <ul class="nav bd-sidenav bd-sidenav__home-link">
+            <li class="toctree-l1">
+                <a class="reference internal" href="../../pyloric_simulator/prinz2004.html">
+                    Pyloric network simulator
+                </a>
+            </li>
+        </ul>
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/alcrene/pyloric-network-simulator" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../../_sources/.github/workflows/README.md" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.md</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+<label class="sidebar-toggle secondary-toggle btn btn-sm" for="__secondary"title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</label>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>GitHub to PyPI in 30 minutes</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#assumptions-tool-choices">Assumptions &amp; tool choices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-instructions-for-publishing">Step-by-step instructions for publishing</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-accounts">Create accounts</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-a-github-private-access-token">Create a GitHub Private Access Token</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#repo-configuration">Repo configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#add-github-actions">Add GitHub Actions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#description-of-the-workflows">Description of the workflows</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prepare-pypi-testpypi">Prepare PyPI/TestPyPI</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#publish-a-release-candidate-to-testpypi">Publish a release candidate to TestPyPI</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#publish-a-new-official-version-on-pypi">Publish a new official version on PyPI</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attribution">Attribution</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section class="tex2jax_ignore mathjax_ignore" id="github-to-pypi-in-30-minutes">
+<h1>GitHub to PyPI in 30 minutes<a class="headerlink" href="#github-to-pypi-in-30-minutes" title="Permalink to this heading">#</a></h1>
+<p>The PyPI is a godsend for Python users, placing most packages they need an easy <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span></code> away.
+The process of <em>putting</em> code on PyPI however has long been much more convoluted.</p>
+<p>The good news is that the last few years have seen massive standardization efforts on the Python packaging front, meaning that for simple projects, it is now possible to devise an (almost) completely portable procedure that will work for all of them.
+The less good news is that with packaging tools still in a bit of flux, a lot of the information you find on the web may seem contradictory, and most of it makes the process more complicated than it now needs to be.</p>
+<p>This little resource is my attempt at collating current recommendations, as of August 2023, into the simplest possible path to PyPI publication. It provides workflow files &amp; guidelines that I can reuse across multiple projects. My hope is that they will also be useful to you, either as⁻is or as a starting point for your own packaging adventure.</p>
+<p>This is <strong>not</strong> a tutorial on publishing to PyPI. That would be beside the point, since it would make this short document very much not short. Also, there are already multiple tutorials available, which are more likely to stay up to date than whatever I write here. My goal here is not for completeness, but maximum concision. If this is your first time using these tools, you will need to look up how they work separately.</p>
+<p>On the other hand, if you just want to get your package on PyPI as quickly as possible and with minimum fuss, this is the resource for you. Just copy a few files into your repo, add the project to PyPI, and you should be good to go.</p>
+<section id="assumptions-tool-choices">
+<h2>Assumptions &amp; tool choices<a class="headerlink" href="#assumptions-tool-choices" title="Permalink to this heading">#</a></h2>
+<p>There are different ways to get a package on PyPI. This guidebook assumes or uses the following:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pypa-build.readthedocs.io/en/latest/">PyPA’s <code class="docutils literal notranslate"><span class="pre">build</span></code></a></p>
+<ul>
+<li><p>This means that only <a class="reference external" href="https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html"><code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code></a> projects are supported.</p></li>
+</ul>
+</li>
+<li><p>Version numbers are automatically determined by <a class="reference external" href="https://github.com/pypa/setuptools_scm"><code class="docutils literal notranslate"><span class="pre">setuptools-scm</span></code></a>, with <a class="reference external" href="https://semver.org/">SemVer</a> tag names.</p>
+<ul>
+<li><p>In particular, this means the <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> should not specify the version explicitely, but rather contain a line like <code class="docutils literal notranslate"><span class="pre">dynamic</span> <span class="pre">=</span> <span class="pre">[&quot;version&quot;]</span></code>.</p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="https://docs.pypi.org/trusted-publishers/using-a-publisher/">Trusted publishing</a> to avoid the need for API tokens.</p></li>
+<li><p>GitHub, because it is currently the only Trusted Publisher.</p></li>
+<li><p><a class="reference external" href="https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/">GitHub Actions</a></p>
+<ul>
+<li><p>Once properly configured, this allows publishing literally at the click of a button. (In contrast to e.g. <code class="docutils literal notranslate"><span class="pre">twine</span></code>, which requires issuing commands you probably forgot since the last time.)</p></li>
+</ul>
+</li>
+<li><p>Separate GitHub workflows for building and publishing.</p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/marketplace/actions/pypi-publish">pypi-publish</a> action</p></li>
+<li><p><a class="reference external" href="https://github.com/dawidd6/action-download-artifact">dawidd6/action-download-artifact</a> in order to separate build and deployment into separate workflows.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="step-by-step-instructions-for-publishing">
+<h2>Step-by-step instructions for publishing<a class="headerlink" href="#step-by-step-instructions-for-publishing" title="Permalink to this heading">#</a></h2>
+<section id="create-accounts">
+<h3>Create accounts<a class="headerlink" href="#create-accounts" title="Permalink to this heading">#</a></h3>
+<p>(Skip if you already have accounts on these services.)</p>
+<ul class="simple">
+<li><p>On <a class="reference external" href="https://test.pypi.org">TestPyPI</a></p></li>
+<li><p>On <a class="reference external" href="https://pypi.org/">PyPI</a></p></li>
+</ul>
+</section>
+<section id="create-a-github-private-access-token">
+<h3>Create a GitHub Private Access Token<a class="headerlink" href="#create-a-github-private-access-token" title="Permalink to this heading">#</a></h3>
+<p>This is needed for the splitting publication into separate “build” and “publish” workflows. The access token is used to allow the publish workflow to read the artifacts from the “build” workflow. See <a class="reference external" href="https://github.com/actions/download-artifact?tab=readme-ov-file#download-artifacts-from-other-workflow-runs-or-repositories">download-artifact docs</a> and <a class="reference external" href="https://github.com/actions/download-artifact/issues/172#issuecomment-1893955510">issue discussion</a>.</p>
+<p>The suggestion below is to use a single token for PyPI publication, for simplicity. It is also possible to have separate tokens for each repo.</p>
+<p>GitHub docs:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens">Configuration personal access tokens</a></p></li>
+<li><p><a class="reference external" href="https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions">Using secrets in GitHub actions</a></p></li>
+</ul>
+<p>What to do:</p>
+<ul class="simple">
+<li><p>User icon -&gt; Developer settings -&gt; Personal access tokens</p></li>
+<li><p>Fill</p>
+<ul>
+<li><p>Token name: Publish to PyPI - [repository name]</p></li>
+<li><p>Expiration: 1 year</p></li>
+<li><p>Description: Allow “publish” GitHub actions to read the artifacts created by “build” actions.</p></li>
+<li><p>Resource owner: You</p></li>
+<li><p>Repository access: Only select repositories -&gt; Select [repository]</p></li>
+<li><p>Permissions</p>
+<ul>
+<li><p>Repository permissions</p>
+<ul>
+<li><p>Actions: Read-only</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Keep the code: you will use it twice below (once for each release environment)</p></li>
+</ul>
+</section>
+<section id="repo-configuration">
+<h3>Repo configuration<a class="headerlink" href="#repo-configuration" title="Permalink to this heading">#</a></h3>
+<p>Do this with the GitHub web UI. (These are my personal preferences; adapt as desired.)</p>
+<ul class="simple">
+<li><p>Settings</p>
+<ul>
+<li><p>General</p>
+<ul>
+<li><p>Default branch</p>
+<ul>
+<li><p>main</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Branches</p>
+<ul>
+<li><p>Add a rule for branch <code class="docutils literal notranslate"><span class="pre">main</span></code></p>
+<ul>
+<li><p>Allow force push</p>
+<ul>
+<li><p>Only admin</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Rules</p>
+<ul>
+<li><p>New tag ruleset</p>
+<ul>
+<li><p>Name: “Protected <code class="docutils literal notranslate"><span class="pre">v*</span></code> tags”</p></li>
+<li><p>Bypass list: Repository admin</p></li>
+<li><p>Target criterion (inclusion): <code class="docutils literal notranslate"><span class="pre">v*</span></code></p></li>
+<li><p>Rules:</p>
+<ul>
+<li><p>Restrict creations</p></li>
+<li><p>Restrict deletions</p></li>
+<li><p>Block force pushes</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Environments</p>
+<ul>
+<li><p>Create 2 environments</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">release</span></code></p>
+<ul>
+<li><p>Wait timer: 15 minutes<a class="footnote-reference brackets" href="#why-timer" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></li>
+<li><p>Deployment branches and tags</p>
+<ul>
+<li><p>Add deployment branch rule <code class="docutils literal notranslate"><span class="pre">main</span></code></p></li>
+</ul>
+</li>
+<li><p>Add environment secret:</p>
+<ul>
+<li><p>Name: GH_PAT</p></li>
+<li><p>Value: [Access token code]</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">release-testpypi</span></code></p>
+<ul>
+<li><p>Limit to protected branches</p></li>
+<li><p>Add environment secret:</p>
+<ul>
+<li><p>Name: GH_PAT</p></li>
+<li><p>Value: [Access token code]</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="add-github-actions">
+<h3>Add GitHub Actions<a class="headerlink" href="#add-github-actions" title="Permalink to this heading">#</a></h3>
+<ul>
+<li><p>Copy the three GitHub workflow files from this repo to your project repo under <code class="docutils literal notranslate"><span class="pre">.github/workflows/</span></code></p>
+<ul>
+<li><p>There are different ways to do this. One way is to clone the repo with <a class="reference external" href="https://github.com/ingydotnet/git-subrepo">git-subrepo</a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mkdir .github
+git subrepo clone https://github.com/alcrene/publish-to-pypi .github/workflows
+</pre></div>
+</div>
+</li>
+</ul>
+</li>
+<li><p>Edit <code class="docutils literal notranslate"><span class="pre">.github/workflows/build.yml</span></code> as needed.</p>
+<ul class="simple">
+<li><p>In particular, check that the Python version is appropriate.</p></li>
+</ul>
+</li>
+</ul>
+<section id="description-of-the-workflows">
+<h4>Description of the workflows<a class="headerlink" href="#description-of-the-workflows" title="Permalink to this heading">#</a></h4>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">build.yml</span></code>:</p>
+<ul>
+<li><p>Will build the distribution files (runs <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">build</span></code>)</p></li>
+<li><p>Will run:</p>
+<ul>
+<li><p>when a new release is created with the GitHub UI;</p></li>
+<li><p>when triggered manually from the <em>Actions</em> menu.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">publish-on-pypi.yml</span></code>:</p>
+<ul>
+<li><p>Will place the package on the official PyPI index</p></li>
+<li><p>Permanent: Once a package is published with PyPI with a version number, no new packages can be published with the same number.</p></li>
+<li><p>Runs within the environment <code class="docutils literal notranslate"><span class="pre">release</span></code>.</p></li>
+<li><p>Will run:</p>
+<ul>
+<li><p>when triggered manually from the <em>Actions</em> menu.</p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">publish-on-testpypi.yml</span></code>:</p>
+<ul>
+<li><p>Will place the package on the test PyPI index</p></li>
+<li><p>The test index can be used</p>
+<ul>
+<li><p>to make sure the packaging pipeline works as it should;</p></li>
+<li><p>to share pre-release with others to allow them to test them.</p>
+<ul>
+<li><p>Packages on test PyPI are installed with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-i</span> <span class="pre">https://test.pypi.org/simple/</span> <span class="pre">&lt;pkg</span> <span class="pre">name&gt;</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Runs within the environment <code class="docutils literal notranslate"><span class="pre">release-testpypi</span></code>.</p></li>
+<li><p>Will run:</p>
+<ul>
+<li><p>when triggered manually from the <em>Actions</em> menu</p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<section id="prepare-pypi-testpypi">
+<h3>Prepare PyPI/TestPyPI<a class="headerlink" href="#prepare-pypi-testpypi" title="Permalink to this heading">#</a></h3>
+<p>Actions are configured to use <a class="reference external" href="https://docs.pypi.org/trusted-publishers/using-a-publisher/"><em>Trusted publishing</em></a>. This avoids the need to generate and store API tokens in the job file, and thus enables (almost) completely generic jobs. What we need to do however is tell PyPI / TestPyPI to expect our new package</p>
+<p>From your PyPI user page:</p>
+<ul class="simple">
+<li><p>Publication</p>
+<ul>
+<li><p>Add a new pending publisher</p>
+<ul>
+<li><p>Project name: must match the <code class="docutils literal notranslate"><span class="pre">name</span></code> field in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code></p></li>
+<li><p>Workflow name: <code class="docutils literal notranslate"><span class="pre">publish-on-pypi.yml</span></code></p></li>
+<li><p>Environment name: <code class="docutils literal notranslate"><span class="pre">release</span></code></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>If you intend to use TestPyPI, you need to repeat the procedure there</p>
+<ul class="simple">
+<li><p>Workflow name: <code class="docutils literal notranslate"><span class="pre">publish-on-testpypi.yml</span></code></p></li>
+<li><p>Environment name: <code class="docutils literal notranslate"><span class="pre">release-testpypi</span></code></p></li>
+</ul>
+</section>
+<section id="publish-a-release-candidate-to-testpypi">
+<h3>Publish a release candidate to TestPyPI<a class="headerlink" href="#publish-a-release-candidate-to-testpypi" title="Permalink to this heading">#</a></h3>
+<p>When you are ready to publish a new release, do the following:
+(The procedure is the same for the first or subsequent releases.)</p>
+<ul class="simple">
+<li><p>Tag the latest commit with an RC version number: <code class="docutils literal notranslate"><span class="pre">v0.1.0-rc.1</span></code></p>
+<ul>
+<li><p>Make sure to use a <a class="reference external" href="https://semver.org/">SemVer</a> so that build tools recognize the version number.</p></li>
+<li><p>The GitHub actions will always build and publish the latest commit with a SemVer tag.</p></li>
+<li><p>Versions prefixed with <code class="docutils literal notranslate"><span class="pre">v</span></code> is the most common standard, and some tools may expect it.</p></li>
+<li><p>Separating numbers – like <code class="docutils literal notranslate"><span class="pre">-rc.1</span></code> – ensures that they order properly with versions like <code class="docutils literal notranslate"><span class="pre">-rc.11</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">setuptools_scm</span></code> will parse the version from the tag name and produce a nice number for the package: <code class="docutils literal notranslate"><span class="pre">0.1.0-rc1</span></code>.</p></li>
+</ul>
+</li>
+<li><p>Push the tag to GitHub</p></li>
+<li><p>Trigger the <code class="docutils literal notranslate"><span class="pre">build.yml</span></code> action manually.</p>
+<ul>
+<li><p>Alternatively, make a new release with the GitHub UI.<br />
+(Unfortunately, there seems to be an issue with automatically triggered builds. See below.)</p></li>
+</ul>
+</li>
+<li><p>Inspect the build output (Actions -&gt; Build Python package -&gt; [latest run])
+If the build looks OK, proceed to publis on Test PyPI:</p>
+<ul>
+<li><p>Copy the RUN ID of the build workflow (the page you are on right now).
+It will be in the URL as <code class="docutils literal notranslate"><span class="pre">https://github.com/.../actions/runs/[RUN</span> <span class="pre">ID]</span></code></p></li>
+<li><p>Open Settings -&gt; Environments -&gt; <code class="docutils literal notranslate"><span class="pre">release</span></code>.<br />
+Add (or update) the variable <code class="docutils literal notranslate"><span class="pre">BUILD_RUN_ID</span></code> with the value you just copied.</p></li>
+<li><p>Optionally do the same for the <code class="docutils literal notranslate"><span class="pre">release-testpypi</span></code> environment.</p></li>
+</ul>
+</li>
+<li><p>Test as needed.</p></li>
+</ul>
+</section>
+<section id="publish-a-new-official-version-on-pypi">
+<h3>Publish a new official version on PyPI<a class="headerlink" href="#publish-a-new-official-version-on-pypi" title="Permalink to this heading">#</a></h3>
+<ul class="simple">
+<li><p>Tag the latest commit with plain version number: <code class="docutils literal notranslate"><span class="pre">v0.1.0</span></code></p>
+<ul>
+<li><p>Make sure to use a <a class="reference external" href="https://semver.org/">SemVer</a> so that build tools recognize the version number.</p></li>
+<li><p>This <em>must</em> be the latest commit with a SemVer tag.</p></li>
+<li><p>This <em>may</em> be the same commit as the latest RC version (and probably should), so the commit will have both an RC version tag and a non-RC version tag.</p></li>
+<li><p>Versions prefixed with <code class="docutils literal notranslate"><span class="pre">v</span></code> is the most common standard, and some tools may expect it.</p></li>
+</ul>
+</li>
+<li><p>Push the tag to GitHub</p></li>
+<li><p>Make a new release with the GitHub UI.</p></li>
+<li><p>Manually trigger the build action.</p>
+<ul>
+<li><p>Make sure the <code class="docutils literal notranslate"><span class="pre">BUILD_RUN_ID</span></code> environment variable points to the latest build.</p></li>
+</ul>
+</li>
+<li><p>If the build looks OK, trigger the <code class="docutils literal notranslate"><span class="pre">publish-on-pypi.yml</span></code> manually from the Actions menu.</p>
+<ul>
+<li><p>This will wait 15 minutes before starting. If during this window you realize you forgot something, you may cancel the action from the Action menu.</p></li>
+</ul>
+</li>
+<li><p>Your package is now on PyPI !</p></li>
+</ul>
+</section>
+</section>
+<section id="attribution">
+<h2>Attribution<a class="headerlink" href="#attribution" title="Permalink to this heading">#</a></h2>
+<p>The GitHub actions are derived from examples from the <a class="reference external" href="https://docs.pypi.org/trusted-publishers/using-a-publisher/">PyPI docs</a> (Apache-2.0) and the <a class="reference external" href="https://github.com/marketplace/actions/pypi-publish#usage">PyPI publish GitHub Action</a> (BSD-3).</p>
+<hr class="footnotes docutils" />
+<aside class="footnote brackets" id="why-timer" role="note">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Once a package is published to PyPI, it cannot be replaced except by publishing a new version with a newer version number. The timer is intended to give you time to realize a mistake and cancel the <code class="docutils literal notranslate"><span class="pre">release</span></code> action before it runs.</p>
+</aside>
+</section>
+</section>
+
+    <script type="text/x-thebe-config">
+    {
+        requestKernel: true,
+        binderOptions: {
+            repo: "binder-examples/jupyter-stacks-datascience",
+            ref: "master",
+        },
+        codeMirrorConfig: {
+            theme: "abcdef",
+            mode: "python"
+        },
+        kernelOptions: {
+            name: "python3",
+            path: "./.github/workflows"
+        },
+        predefinedOutput: true
+    }
+    </script>
+    <script>kernelName = 'python3'</script>
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#assumptions-tool-choices">Assumptions &amp; tool choices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#step-by-step-instructions-for-publishing">Step-by-step instructions for publishing</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-accounts">Create accounts</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#create-a-github-private-access-token">Create a GitHub Private Access Token</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#repo-configuration">Repo configuration</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#add-github-actions">Add GitHub Actions</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#description-of-the-workflows">Description of the workflows</a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#prepare-pypi-testpypi">Prepare PyPI/TestPyPI</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#publish-a-release-candidate-to-testpypi">Publish a release candidate to TestPyPI</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#publish-a-new-official-version-on-pypi">Publish a new official version on PyPI</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attribution">Attribution</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Alexandre René
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2022.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

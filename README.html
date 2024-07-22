@@ -312,6 +312,7 @@ document.write(`
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-implementations">Other implementations:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#main-features">Main features</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#limitation">Limitation</a></li>
@@ -319,7 +320,9 @@ document.write(`
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-standalone-package">Alternative: Standalone package</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-the-pypi-index">From the PyPI index</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#as-inlined-source">As inlined source</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#developer-alternative-as-a-separate-editable-package">Developer alternative: as a separate editable package</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
@@ -338,35 +341,82 @@ document.write(`
   <section class="tex2jax_ignore mathjax_ignore" id="pyloric-network-simulator">
 <h1>Pyloric network simulator<a class="headerlink" href="#pyloric-network-simulator" title="Permalink to this heading">#</a></h1>
 <p>The pyloric circuit model described by Prinz at al.<a class="footnote-reference brackets" href="#model-def" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a> continues to be studied today,
-both as an instructive model of an interesting biological process<a class="footnote-reference brackets" href="#prinz-research" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> and also as a case study of functional diversity in computational models.<a class="footnote-reference brackets" href="#goncalves2022" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a>
-The authors’ <a class="reference external" href="https://biology.emory.edu/research/Prinz/database-sensors/">also provide</a> their C++ implementation of the model.</p>
+both as an instructive model of an interesting biological process<a class="footnote-reference brackets" href="#prinz-research" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a> and also as a case study of functional diversity in computational models.<a class="footnote-reference brackets" href="#goncalves2022" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></a></p>
 <p>This repository is a reimplementation of the model in pure Python, using JAX to achieve comparable execution speeds as C/C++.</p>
+<p>It is especially meant for users who want to modify the code themselves, or integrate as part of a Python stack.</p>
+<section id="other-implementations">
+<h2>Other implementations:<a class="headerlink" href="#other-implementations" title="Permalink to this heading">#</a></h2>
+<ul class="simple">
+<li><p>A variant of the <a class="reference external" href="https://biology.emory.edu/research/Prinz/database-sensors/">original C++</a> implementation used in a later study.</p>
+<ul>
+<li><p>(As of July 2024 the link above seems dead, but this <a class="reference external" href="https://modeldb.science/144387">ModelDB page</a> is still available.)</p></li>
+</ul>
+</li>
+<li><p>In <a class="reference external" href="https://v1.opensourcebrain.org/projects/pyloricnetwork">Open source brain</a>. This implementation is designed for interoperability between different neuron simulation solutions, such as NeuroML and NEURON.</p></li>
+<li><p>As an motivating example for the <a class="reference external" href="https://doi.org/10.7554/eLife.47314">Brian 2 simulator</a>.</p></li>
+<li><p>In a tutorial for the <a class="reference external" href="https://xolotl.readthedocs.io/en/master/tutorials/first-network/">xolotl simulator</a>.</p></li>
+</ul>
+</section>
 <section id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">#</a></h2>
 <section id="main-features">
 <h3>Main features<a class="headerlink" href="#main-features" title="Permalink to this heading">#</a></h3>
 <ul>
-<li><p>Easy to install: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pyloric-network-simulator</span> <span class="pre">&quot;jax[cpu]&quot;</span></code></p></li>
-<li><p>Easy to use: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pyloric_network_simulator</span> <span class="pre">import</span> <span class="pre">prinz2004</span></code></p>
+<li><p><strong>Easy to install</strong></p>
 <ul class="simple">
+<li><p>From PyPI: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pyloric-network-simulator</span> <span class="pre">&quot;jax[cpu]&quot;</span></code></p></li>
+<li><p>As inlined source: Copy the handful of files under <em>pyloric_simulator</em> folder into your project.</p></li>
+</ul>
+</li>
+<li><p><strong>Easy to use</strong></p>
+<ul class="simple">
+<li><p>Import as any Python package: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pyloric_network_simulator</span> <span class="pre">import</span> <span class="pre">prinz2004</span></code></p></li>
 <li><p>No need to learn about C linkers or HDF5 file formats.</p></li>
-<li><p>Model thermalizations are computed as needed.</p>
+<li><p>No dependency on a neuron simulator library</p>
 <ul>
-<li><p>In the original implementation, an initial sweep over 20 million models for individual neurons</p></li>
+<li><p>This can be useful to use the model in conjunction with generic numerical toolboxes.</p></li>
+<li><p>However it also means we don’t benefit from the ecosystem of neuron simulators.</p></li>
+</ul>
+</li>
+<li><p><em>On-demand thermalization</em></p>
+<ul>
+<li><p>The original implementation performs an initial sweep over 20 million parameter sets for individual neurons,
+integrating each for a long period (~ 5 min simulated time) in order to find their realistic states.
+This makes sense if we want to systematically test all of those models, but it takes a lot of time, uses a lot
+of memory, and limits later simulations to those parameters for which we have thermalizations.</p></li>
+<li><p>The Brian and xolotl implementations are meant as illustrative examples, and to the best of my understanding
+don’t perform any thermalization.</p></li>
+<li><p>Here models are thermalized on demand the first time a new parameter combination is used.
+The result is then saved to an on-disk cache (managed with <code class="docutils literal notranslate"><span class="pre">shelve</span></code>).
+This makes thermalizations completely transparent to the user (modulo a 5–10 min wait time) and ensures that
+it is performed only on those models which we actually need. This is a much more efficient approach if</p>
+<ul>
+<li><p>We will need to execute the model with a limited number of parameters (e.g. because the parameter ranges we
+want to explore have already been identified).</p></li>
+<li><p>We want to search the parameter space more efficiently, for example with a gradient-based parameter optimizer.
+This can allow for much higher resolutions in parameter space, while still requiring much fewer model simulations
+than a grid search.</p></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><p>Easy to understand:</p>
+</ul>
+</li>
+<li><p><strong>Fast</strong></p>
 <ul class="simple">
-<li><p>Python is easier to read than C++ and familiar to more users (especially to scientists).</p></li>
-<li><p>Code structure closely follows how the model is defined in the papers, making it easier to understand each component.</p></li>
-<li><p>The entire model fits in a single code file.</p></li>
-<li><p>The code file can be opened in a Jupyter Notebook,<a class="footnote-reference brackets" href="#jupytext" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a> providing structure and formatted documentation explaining each code section in detail.<br />
-<img alt="Screenshot: Conductance model" src="_images/inlined-docs-1.png" />  <img alt="Screenshot: Constants" src="_images/inlined-docs-2.png" /></p></li>
+<li><p>Special care was taken to use vectorized operations wherever possible, and JAX’s JIT capability is used to compile
+the model to C at runtime. This should provide speeds comparable with a plain C/C++ implementation.
+Use of JAX also opens the possibility of using GPU acceleration for models with many neurons.</p></li>
 </ul>
 </li>
-<li><p>Easy to modify:</p>
+<li><p><strong>Fully documented</strong></p>
+<ul class="simple">
+<li><p>The original specification of the pyloric circuit model is spread across at least three resources<a class="footnote-reference brackets" href="#model-def" id="id4" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p></li>
+<li><p>Here all definitions are in one place, fully referenced and using consistent notation.
+Since the documentation is inlined into the code, definitions appear right next to where they are actually used.</p></li>
+</ul>
+</li>
+<li><p><strong>Easy to modify</strong></p>
 <ul>
 <li><p>Users have full control over the circuit topology: number, size and type of populations, as well as the synaptic conductivities, are all specified when creating the model:</p>
 <p>Standard pyloric circuit with 4 populations</p>
@@ -390,11 +440,15 @@ The authors’ <a class="reference external" href="https://biology.emory.edu/res
 </li>
 </ul>
 </li>
-<li><p>Fully documented: The original specification of the pyloric circuit model is spread across at least three resources<a class="footnote-reference brackets" href="#model-def" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.
-The included inlined documentation collects all definitions in one place, is fully referenced and uses standardized notation.</p></li>
-<li><p>Fast: Special care was taken to use vectorized operations wherever possible, and JAX’s JIT capability is used to compile
-the model to C at runtime. This should provide speeds comparable with a plain C/C++ implementation.
-Use of JAX also opens the possibility of using GPU acceleration for models with many neurons.</p></li>
+<li><p><strong>Easy to understand</strong></p>
+<ul class="simple">
+<li><p>Python is easier to read than C++ and familiar to more users (especially to scientists).</p></li>
+<li><p>The code structure closely follows how the model is defined in the papers, making it easier to understand each component.</p></li>
+<li><p>The entire model fits in a single code file.</p></li>
+<li><p>The code file can be opened in a Jupyter Notebook,<a class="footnote-reference brackets" href="#jupytext" id="id5" role="doc-noteref"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></a> providing structure and formatted documentation explaining each code section in detail.<br />
+<img alt="Screenshot: Conductance model" src="_images/inlined-docs-1.png" />  <img alt="Screenshot: Constants" src="_images/inlined-docs-2.png" /></p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="limitation">
@@ -404,13 +458,13 @@ in contrast to the original C/C++ implementation which has received many years o
 This implementation also has not been exhaustively tested for consistency with the original.</p>
 <ul class="simple">
 <li><p>Basic qualitative comparisons suggests that the single neuron conductance models closely reproduce the results reported by Prinz et al.</p></li>
-<li><p>Some differences in the simulated activity (wrt to the original implementation) do seem to occur when neuron models are combined into a circuit.</p></li>
+<li><p>Some differences in the simulated activity (with respect to the original implementation) do seem to occur when neuron models are combined into a circuit.</p></li>
 </ul>
 </section>
 <section id="code-structure">
 <h3>Code structure<a class="headerlink" href="#code-structure" title="Permalink to this heading">#</a></h3>
 <p>The code uses <a class="reference external" href="https://mystmd.org/">MyST Markdown</a> and <a class="reference external" href="https://jupytext.readthedocs.io/">Jupytext</a>, which enables a <a class="reference external" href="https://texfaq.org/FAQ-lit">literate programming</a> style by embedding rich Markdown comments in Python comments.
-The result is documentation and code which as near as possible.
+The result is documentation and code which are located as near as possible.
 This is especially useful for scientific programming, where the code itself may not be especially complicated, but may be the result of
 complex arguments which need mathematics or figures to express intelligibly.</p>
 <p>Literate code files like <code class="docutils literal notranslate"><span class="pre">prinz2004.py</span></code> are multi-purpose:</p>
@@ -424,10 +478,21 @@ complex arguments which need mathematics or figures to express intelligibly.</p>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h2>
-<p>Since the documentation is inlined with the code, we recommend including the source code in your project</p>
+<section id="from-the-pypi-index">
+<h3>From the PyPI index<a class="headerlink" href="#from-the-pypi-index" title="Permalink to this heading">#</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install pyloric-network-simulator &quot;jax[cpu]&quot;
+</pre></div>
+</div>
+</section>
+<section id="as-inlined-source">
+<h3>As inlined source<a class="headerlink" href="#as-inlined-source" title="Permalink to this heading">#</a></h3>
+<p>Since the entire project is just a few files, it is completely legitimate to just inline the entire thing into your project.
+This has the advantage that it makes it easy for you to peruse the code and inlined documentation, and to make changes to suit your needs.</p>
+<p>This is the installation method I recommend, since it encourages you to take ownership of the code rather than trust it blindly.
+It also ensures that the exact version you use is archived within your project.</p>
 <ol class="arabic">
 <li><p>Download the <a class="reference external" href="https://github.com/alcrene/pyloric-network-simulator/releases">most recent release</a>.<br />
-Alternatively, you can use <a class="reference external" href="https://github.com/ingydotnet/git-subrepo"><code class="docutils literal notranslate"><span class="pre">git-subrepo</span></code></a> to clone this repository into a subdirectory of your project.</p></li>
+Alternatively, you can use <a class="reference external" href="https://github.com/ingydotnet/git-subrepo"><code class="docutils literal notranslate"><span class="pre">git-subrepo</span></code></a> to clone this repository into a subdirectory of your project. This has the advantage of later allowing you to pull updates.</p></li>
 <li><p>Unpack into your project directory, so it looks something like</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;my-project&gt;
 ├─ ...
@@ -451,13 +516,16 @@ Alternatively, you can use <a class="reference external" href="https://github.co
 </div>
 </li>
 <li><p>Install the requirements</p>
-<p>pip install -r ./pyloric_simulator/requirements.txt</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install -r ./pyloric_simulator/requirements.txt
+</pre></div>
+</div>
 </li>
 <li><p>Add the contents of <code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> to your own dependencies.</p></li>
 </ol>
 <p>To use the <code class="docutils literal notranslate"><span class="pre">prinz2004.py</span></code> module, just import it as you would any of your own modules.</p>
-<section id="alternative-standalone-package">
-<h3>Alternative: Standalone package<a class="headerlink" href="#alternative-standalone-package" title="Permalink to this heading">#</a></h3>
+</section>
+<section id="developer-alternative-as-a-separate-editable-package">
+<h3>Developer alternative: as a separate editable package<a class="headerlink" href="#developer-alternative-as-a-separate-editable-package" title="Permalink to this heading">#</a></h3>
 <p>If you want to develop the simulator, you may prefer to clone the repository and make it a dependency to your project.</p>
 <ol class="arabic">
 <li><p>Choose a location for the repo</p>
@@ -480,7 +548,10 @@ Alternatively, you can use <a class="reference external" href="https://github.co
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">#</a></h2>
-<p>See the <a class="reference external" href="https://alcrene.github.io/pyloric-network-simulator/pyloric_simulator/prinz2004.html">documentation</a>.</p>
+<p>If you installed as a package: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pyloric_network_simulator</span> <span class="pre">import</span> <span class="pre">prinz2004</span></code>.</p>
+<p>If you installed as inlined source: The exact import statement will depend on where you placed the unpacked files.
+It may look like <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">my_project.pyloric_network_simulator</span> <span class="pre">import</span> <span class="pre">prinz2004</span></code>.</p>
+<p>See the <a class="reference external" href="https://alcrene.github.io/pyloric-network-simulator/pyloric_simulator/prinz2004.html">documentation</a> for further instructions and examples.</p>
 </section>
 <section id="building-the-documentation">
 <h2>Building the documentation<a class="headerlink" href="#building-the-documentation" title="Permalink to this heading">#</a></h2>
@@ -499,7 +570,7 @@ Alternatively, you can use <a class="reference external" href="https://github.co
 <hr class="footnotes docutils" />
 <aside class="footnote brackets" id="model-def" role="note">
 <span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id5">2</a>)</span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id4">2</a>)</span>
 <p>• Prinz, A. A., Bucher, D. &amp; Marder, E. <em>Similar network activity from disparate circuit parameters.</em> Nature Neuroscience 7, 1345–1352 (2004). <a class="reference external" href="https://doi.org/10.1038/nn1352">doi:10.1038/nn1352</a><br />
 • Prinz, A. A., Billimoria, C. P. &amp; Marder, E. <em>Alternative to Hand-Tuning Conductance-Based Models: Construction and Analysis of Databases of Model Neurons.</em>
 Journal of Neurophysiology 90, 3998–4015 (2003). <a class="reference external" href="https://doi.org/10.1152/jn.00641.2003">doi:10.1152/jn.00641.2003</a><br />
@@ -514,7 +585,7 @@ Journal of Neurophysiology 90, 3998–4015 (2003). <a class="reference external"
 <p>Gonçalves, P. J. et al. <em>Training deep neural density estimators to identify mechanistic models of neural dynamics.</em> eLife 9, e56261 (2020). <a class="reference external" href="https://doi.org/10.7554/eLife.56261">doi:10.7554/eLife.56261</a></p>
 </aside>
 <aside class="footnote brackets" id="jupytext" role="note">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">4</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id5">4</a><span class="fn-bracket">]</span></span>
 <p>Presuming the <a class="reference external" href="https://jupytext.readthedocs.io/">Jupytext</a> extension is installed.</p>
 </aside>
 </section>
@@ -569,6 +640,7 @@ Journal of Neurophysiology 90, 3998–4015 (2003). <a class="reference external"
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#other-implementations">Other implementations:</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#main-features">Main features</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#limitation">Limitation</a></li>
@@ -576,7 +648,9 @@ Journal of Neurophysiology 90, 3998–4015 (2003). <a class="reference external"
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#alternative-standalone-package">Alternative: Standalone package</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#from-the-pypi-index">From the PyPI index</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#as-inlined-source">As inlined source</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#developer-alternative-as-a-separate-editable-package">Developer alternative: as a separate editable package</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
