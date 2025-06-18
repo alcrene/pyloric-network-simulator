@@ -6,20 +6,20 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: Python (emd-paper)
+#     display_name: Python (pyloric-sim)
 #     language: python
-#     name: emd-paper
+#     name: pyloric-sim
 # ---
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # ---
 # bibliography:
 #   - references.bib
 # ---
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # # Comparison with published results
 
 # %%
@@ -40,17 +40,17 @@ s  = ureg.s
 ms = ureg.ms
 
 # %% user_expressions=[]
-hv.extension("bokeh", "matplotlib")
+hv.extension("bokeh")#, "matplotlib")
 
 # %%
 dims = SimpleNamespace(
     mpl = SimpleNamespace(
-        t     = hv.Dimension("t", label="time", unit="$\mathrm{ms}$"),
-        I_ext = hv.Dimension("I_ext", label="external input", unit="$\mathrm{nA}$"),
-        Δt = hv.Dimension("Δt", label="time lag", unit="$\mathrm{ms}$"),
-        I  = hv.Dimension("I", unit="$\mathrm{nA}$"),
-        I2 = hv.Dimension("I2", label="$\langle I^2 \rangle$", unit="$\mathrm{nA}^2$"),
-        V  = hv.Dimension("V", unit="$\mathrm{mV}$"),
+        t     = hv.Dimension("t", label="time", unit=r"$\mathrm{ms}$"),
+        I_ext = hv.Dimension("I_ext", label="external input", unit=r"$\mathrm{nA}$"),
+        Δt = hv.Dimension("Δt", label="time lag", unit=r"$\mathrm{ms}$"),
+        I  = hv.Dimension("I", unit=r"$\mathrm{nA}$"),
+        I2 = hv.Dimension("I2", label=r"$\langle I^2 \rangle$", unit=r"$\mathrm{nA}^2$"),
+        V  = hv.Dimension("V", unit=r"$\mathrm{mV}$"),
         Ca = hv.Dimension("Ca", label="$[Ca^{2+}]$")
     ),
     bokeh = SimpleNamespace(
@@ -93,14 +93,14 @@ def plot_traces(res, varname="V", pop_labels=None, backend="bokeh"):
     return fig
 
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # ## In depth tracking of a single bursting cell
 #
 # Here we all dynamic variables (voltage, calcium, ion channels) for a single bursting neuron. The specific model is `AB/PD #3`, also shown in Figure 2 of {cite:t}`prinzSimilarNetworkActivity2004` (grey boxes at the top).
 
 # %%
 model = Prinz2004(pop_sizes={"AB": 1}, gs=[[0]], g_ion=neuron_models.loc[[f"AB/PD 3"]])
-res = model.integrate_warm_init()
+res = model.thermalize()
 plot_traces(res, "V").opts(title="Spontaneous voltage activity, AB/PD 3")
 
 # %%
@@ -115,7 +115,7 @@ Eleak = constants.Eleak
 mphVE = res.m**p[:,np.newaxis] * (V[:,np.newaxis,:] - E[:,np.newaxis])
 mphVE[:,h_slice,:] *=  res.h
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # Restrict plots to the range $[1.2\mathrm{s}, 3.6\mathrm{s}]$, corresponding to two burst periods. (We record a point every $\mathrm{ms}$ – this range is already long enough to make plotting sluggish.)
 
 # %%
@@ -125,7 +125,7 @@ V     =  V[tslice, 0]
 Ca    = Ca[tslice, 0]
 mphVE = mphVE[tslice, :, 0]
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # Calcium concentration and calcium reversal potential
 
 # %%
@@ -139,7 +139,7 @@ ECa_curve = hv.Curve(zip(t, ECa), kdims=dims.bokeh.t, vdims=dims.bokeh.V, label=
     hv.opts.Curve("Curve.E_Ca", title="Calcium reversal potential"),
 )
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # Ion currents, per channels
 #
 # :::{note}
@@ -233,7 +233,7 @@ fig.opts(
     hv.opts.Overlay(width=500, legend_position="right", backend="bokeh")
 ).cols(2)
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # # Full three population circuit
 #
 # Figure 3 of {cite:t}`prinzSimilarNetworkActivity2004` gives example activities for different model parameters. We can use this to compare with simulations from our own model.
@@ -268,7 +268,7 @@ sim_time = Dict(
 burnin_time = 3*s
 Δt          = 0.25*ms
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # a-e
 
 # %% jupyter={"source_hidden": true}
@@ -317,7 +317,7 @@ e = Prinz2004(
     g_ion = neuron_models.loc[["AB/PD 2", "AB/PD 2", "LP 4", "PY 1"]],
 )
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # f-j
 
 # %% jupyter={"source_hidden": true}
@@ -366,18 +366,18 @@ j = Prinz2004(
     g_ion = neuron_models.loc[["AB/PD 4", "AB/PD 4", "LP 2", "PY 1"]],
 )
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # ## Plotting config
 
 # %%
 dims = SimpleNamespace(
     mpl = SimpleNamespace(
-        t     = hv.Dimension("t", label="time", unit="$\mathrm{ms}$"),
-        I_ext = hv.Dimension("I_ext", label="external input", unit="$\mathrm{nA}$"),
-        Δt = hv.Dimension("Δt", label="time lag", unit="$\mathrm{ms}$"),
-        I  = hv.Dimension("I", unit="$\mathrm{nA}$"),
-        I2 = hv.Dimension("I2", label="$\langle I^2 \rangle$", unit="$\mathrm{nA}^2$"),
-        V  = hv.Dimension("V", unit="$\mathrm{mV}$")
+        t     = hv.Dimension("t", label="time", unit=r"$\mathrm{ms}$"),
+        I_ext = hv.Dimension("I_ext", label="external input", unit=r"$\mathrm{nA}$"),
+        Δt = hv.Dimension("Δt", label="time lag", unit=r"$\mathrm{ms}$"),
+        I  = hv.Dimension("I", unit=r"$\mathrm{nA}$"),
+        I2 = hv.Dimension("I2", label=r"$\langle I^2 \rangle$", unit=r"$\mathrm{nA}^2$"),
+        V  = hv.Dimension("V", unit=r"$\mathrm{mV}$")
     ),
     bokeh = SimpleNamespace(
         t     = hv.Dimension("t", label="time", unit="ms"),
@@ -416,8 +416,15 @@ def plot_Vtrace(sim_result):
     return panel.cols(1)
 
 
-# %% [markdown] user_expressions=[]
+# %% [markdown]
 # ## Run simulations
+#
+# Plugging the neurons together into the circuit described in the paper, we get different outputs.
+# (Panel _c_ could be argued to be qualitatively similar, but all models are very different.)
+# The fact that our model reproduces the paper so nicely for single-cell models, but gives different results when three neurons are wired together, is indicative of the sensitivity of these models to parameter choice.
+#
+# In this case, since our RK45 integration raises numerical warnings – and the original implementation used the even less numerically robust Euler integration – there is reason to suspect that the precise parameter values found by Prinz et al. are contaminated by numerical issues.
+# If that is the case, we would need to find different parameter values to reproduce the variety of behaviours with a more accurate integrator.
 
 # %%
 panels = {}
@@ -425,7 +432,7 @@ panels = {}
 # %%
 for model, label in [(a, "a"), (b, "b"), (c, "c"), (d, "d"), (e, "e"),
                      (f, "f"), (g, "g"), (h, "h"), (i, "i"), (j, "j")]:
-    if label != "b":
+    if label not in {"b", "c"}:
         continue
     n_time_steps = int(round((burnin_time + sim_time[label]) / Δt)) + 1
     res = model(np.arange(n_time_steps)*Δt.m)
@@ -436,7 +443,9 @@ for model, label in [(a, "a"), (b, "b"), (c, "c"), (d, "d"), (e, "e"),
 fig = hv.HoloMap(panels, kdims="panel").collate()
 
 # %%
-fig.opts(hv.opts.Curve(height=300, width=500))
+fig.opts(
+    #hv.opts.Curve("Curve", height=300, width=500)
+)
 
 # %%
 hv.save(fig, "reproduce_fig3.html")

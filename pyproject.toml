@@ -58,6 +58,7 @@ dependencies = [
 docs = ["jupyter-book", "jupytext",
         "matplotlib", "pint", "watermark",
         "ghp-import"]
+test = ["pint", "holoviews"]
 
 [project.urls]
 "Source" = "https://github.com/alcrene/pyloric-network-simulator"

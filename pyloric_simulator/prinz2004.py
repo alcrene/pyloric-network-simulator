@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.15.0
+#       jupytext_version: 1.16.7
 #   kernelspec:
 #     display_name: Python (pyloric-network)
 #     language: python
@@ -1053,7 +1053,7 @@ act_params_styled = act_params.style \
 # NB: The columns get re-sorted after `stack`: we need to sort them back to the original order,
 #     otherwise indices will be incorrect
 def var_key(var_index,
-            odict={var_label: i for i, var_label in enumerate([dims[v].label for v in act_varnames])}):
+            odict={var_label: i for i, var_label in enumerate(dims[v].label for v in act_varnames)}):
     return pd.Index([odict[label] for label in var_index.values])
 def channel_key(index,
                 odict={lbl: i for i, lbl in enumerate(dims[v].label for v in channels)}):
@@ -1063,7 +1063,7 @@ def var_channel_key(index):
         return var_key(index)
     except KeyError:
         return channel_key(index)
-vp = act_params.stack("var").unstack("channel") \
+vp = act_params.stack("var", future_stack=True).unstack("channel") \
                .sort_index(axis="columns", level=1, key=channel_key) \
                .sort_index(axis="index", key=var_key)
 act_params = namedtuple("ActivationParams", list("abcC")
