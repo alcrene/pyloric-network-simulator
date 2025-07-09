@@ -63,9 +63,11 @@ test = ["pint", "holoviews"]
 [project.urls]
 "Source" = "https://github.com/alcrene/pyloric-network-simulator"
 
+[tool.setuptools.package-data]
+"*" = ["*.cfg"]
 
 [tool.setuptools_scm]
-write_to = "pyloric_simulator/_version.py"
+write_to = "src/pyloric_network_simulator/_version.py"
 
 
 [build-system]
