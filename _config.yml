@@ -3,12 +3,16 @@
 
 title: Pyloric network simulator
 author: Alexandre René
-#logo: logo.png
+logo: logo.svg
+exclude_patterns: ["test/**"]
+exclude_patterns: [_build, Thumbs.db, .DS_Store, "**.ipynb_checkpoints", ".*", "**.egg-info", "*.mypy_cache", "**__pycache__", "**/.pytest_cache",
+                   "test/**"]
 
 # Force re-execution of notebooks on each build.
 # See https://jupyterbook.org/content/execute.html
 execute:
   execute_notebooks: cache
+  exclude_patterns: ["test/**"]
   timeout: -1
 
 parse:
@@ -47,6 +51,7 @@ repository:
 html:
   use_issues_button: false
   use_repository_button: true
+  favicon: favicon.svg
 
 sphinx:
   config:

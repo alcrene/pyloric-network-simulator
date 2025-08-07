@@ -8,9 +8,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.16.7
 #   kernelspec:
-#     display_name: Python (pyloric-network)
+#     display_name: Python (pyloric-sim)
 #     language: python
-#     name: pyloric-network
+#     name: pyloric-sim
 # ---
 
 # %% [markdown] tags=["remove-cell"] editable=true slideshow={"slide_type": ""}
@@ -174,7 +174,7 @@ __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 
 # %% editable=true slideshow={"slide_type": ""} tags=["active-ipynb", "remove-output"]
 # import holoviews as hv
-# from pyloric_simulator.prinz2004 import Prinz2004, neuron_models, dims
+# from pyloric_network_simulator.prinz2004 import Prinz2004, neuron_models, dims
 # hv.extension("bokeh")  # Bokeh plots allow to zoom in on the trace much more easily
 
 # %% [markdown]
@@ -1044,7 +1044,7 @@ act_params_styled = act_params.style \
 # %% editable=true slideshow={"slide_type": ""} tags=["remove-input", "active-ipynb"]
 # ```{glue:figure} tbl_act_params
 #
-# Voltage dependence - $a, b, c, C$
+# Voltage dependence parameters — $a, b, c, C$
 # ```
 
 # %% editable=true slideshow={"slide_type": ""} tags=["remove-cell"]

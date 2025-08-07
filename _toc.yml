@@ -1,5 +1,5 @@
 format: jb-article
-root: pyloric_simulator/prinz2004
+root: src/pyloric_network_simulator/prinz2004
 
 sections:
 - file: references
