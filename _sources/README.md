@@ -7,6 +7,8 @@ This repository is a reimplementation of the model in pure Python, using JAX to 
 
 It is especially meant for users who want to modify the code themselves, or integrate as part of a Python stack.
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.12797199.svg)](https://doi.org/10.5281/zenodo.12797199)
+
 ## Other implementations:
 
 - A variant of the [original C++](https://biology.emory.edu/research/Prinz/database-sensors/) implementation used in a later study.
