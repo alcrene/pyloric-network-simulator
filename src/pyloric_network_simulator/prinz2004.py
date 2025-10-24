@@ -58,7 +58,7 @@
 # > **NOTE** Within Jupyter Lab, this notebook is best displayed with [`jupyterlab-myst`](https://myst-tools.org/docs/mystjs/quickstart-jupyter-lab-myst).
 
 # %% [markdown]
-# This is an implementation of the three-cell model of crustacean stomatogastric ganglion described in {cite:t}`marderModelingSmallNetworks1998` and used by {cite:t}`prinzSimilarNetworkActivity2004` to demonstrate that disparate parameter sets lead to comparable network activity. The main features of this particular implementation are:
+# This is an implementation of the three-cell model of crustacean stomatogastric ganglion described in {cite:t}`marderModelingSmallNetworks1998` and used by {cite:authors}`prinzSimilarNetworkActivity2004` to demonstrate that disparate parameter sets lead to comparable network activity. The main features of this particular implementation are:
 #
 # JAX-accelerated Python implementation
 # ~ Combines the flexibility of Python with the speed of compiled JAX code.
@@ -76,11 +76,11 @@
 # ~ You are not limited to the published three-cell network: studying a smaller two-cell network, or a larger one with different LP cells, is a simple matter of changing three arrays.
 #
 # All-in-one documentation
-# ~ The original specification of the pyloric circuit model is spread across at least three resources[^model-def].  
-#   Here all definitions are included in the inlined documentaiton, are fully referenced and use consistent notation.
+# ~ The original specification of the pyloric circuit model is spread across at least three resources.[^model-def]
+#   Here all definitions are included in the inlined documentation, are fully referenced and use consistent notation.
 #
 # Single source of truth
-# ~ Both the documentation and the code use the same source for parameter values, so you can be sure the documentated values are actually those used in the code. 
+# ~ Both the documentation and the code use the same source for parameter values, so you can be sure the documented values are actually those used in the code. 
 # ~ In cases where this was not practical, Python values are specified with a string identical to the source of the documentation’s Markdown table.
 #   Agreement between documentation and code can be checked at any time by [“diff”-ing](https://linuxhandbook.com/diff-command/) the markdown and Python code blocks, or copy-pasting one onto the other.
 #
@@ -183,7 +183,7 @@ __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 # - The number of neurons of each type (PD, AB, LP and PY)
 # - The connectivity `gs` between populations
 # - The set of membrane conductances for each type `g_cond`.  
-#   The 16 sets which define the neuron models used in {cite:t}`prinzSimilarNetworkActivity2004` are provided in `neuron_models`.
+#   The 16 sets which define the neuron models used in {cite:t}`prinzSimilarNetworkActivity2004` are provided as a Pandas DataFrame in the variable `neuron_models`.
 
 # %% [markdown]
 # :::{margin}
@@ -203,9 +203,9 @@ __all__ = ["Prinz2004", "State", "SimResult", "neuron_models", "dims"]
 # :::
 
 # %% tags=["active-ipynb"]
-# # Note that cholinergic (PD) and glutamatergic (AB, LP, PY) neurons are contiguous.
-# # This allows the model to use more efficient indexing based on slices,
-# # instead of slower indexing arrays.
+# # Note that the two subarrays of cholinergic (PD) and glutamatergic (AB, LP, PY)
+# # neurons are contiguous, to allow more efficient indexing based on slices.
+# # (Compared to indexing with arrays.)
 # # `pop_size` keys should match one of the four type labels (AB, PD, LP, PY) or the
 # # combined label "AB/PD". If there are multiple neurons of one type, they can be
 # # followed by a number: "AB 1", "AB 2", ...
@@ -394,7 +394,7 @@ dims.t.unit = "ms"
 # ## Single compartment conductance model
 #
 # The conductance model is described in {cite:t}`prinzAlternativeHandTuningConductanceBased2003` (p.1-2, §*Model*).
-# Where differences in notation occur, we prefer those in {cite:t}`prinzSimilarNetworkActivity2004`.
+# Where differences in notation occur, we prefer that in {cite:t}`prinzSimilarNetworkActivity2004`.
 #
 # In the equations, $I_i$ is the current for each channel, while $I_{\mathrm{input}}$ is the current from synaptic inputs $I_e$ and $I_s$. These are computed using the [electrical](sec_elec-synapse-model) and [chemical](sec_chem-synapse-model) synapse models defined below.
 # We also allow for an additional external input current $I_{\mathrm{ext}}$; this current is not necessary to drive the system (after all, a defining feature of the pyloric circuit is its spontaneous rhythm). Expected magnitudes for $I_{\mathrm{ext}}$ are 3–6 $\mathrm{nA}$.[^loose-units]
@@ -405,7 +405,7 @@ dims.t.unit = "ms"
 # :::{note}
 # :class: margin
 #
-# Although a concentration must always be positive, the differential equation for $\bigl[\Ca^{2+}\bigr]$ reproduced here from {cite:t}`prinzSimilarNetworkActivity2004` does not *per se* prevent the occurence of a negative concentration. (Sustained $\CaT$ and $\CaS$ currents could drive $\bigl[\Ca^{2+}\bigr]$ below zero.) In practice the rest of the ODE dynamics seem to prevent this, but nevertheless to ensure $\bigl[\Ca^{2+}\bigr]$ is always positive and improve numerical stability, in our [implementation](sec-prinz-model-implementation) below we track $\log \bigl[\Ca^{2+}\bigr]$ instead. Since concentrations can span multiple orders of magnitude, considering them in log space is in fact rather natural.
+# Although a concentration must always be positive, the differential equation for $\bigl[\Ca^{2+}\bigr]$ reproduced here from {cite:t}`prinzSimilarNetworkActivity2004` does not *per se* prevent the occurrence of a negative concentration. (Sustained $\CaT$ and $\CaS$ currents could drive $\bigl[\Ca^{2+}\bigr]$ below zero.) In practice the rest of the ODE dynamics seem to prevent this, but nevertheless to ensure $\bigl[\Ca^{2+}\bigr]$ is always positive and improve numerical stability, in our [implementation](sec-prinz-model-implementation) below we track $\log \bigl[\Ca^{2+}\bigr]$ instead. Since concentrations can span multiple orders of magnitude, considering them in log space is in fact rather natural.
 #
 # A similar thing can be said of $m$ and $h$, which must be bounded within $[0, 1]$; in this case we use a logit transformation to ensure the variables never exceed their bounds. ([We also do this](sec_chem-synapse-model) for the synapse activations.)
 # :::
@@ -427,12 +427,14 @@ dims.t.unit = "ms"
 # $$\begin{align*}
 # τ_\Ca \frac{d \bigl[\Ca^{2+}\bigr]}{dt} &= -f(I_\CaT + I_\CaS) - \bigl[\Ca^{2+}\bigr] + \bigl[\Ca^{2+}\bigr]_0
 # \end{align*}$$
+#
+# Note that here $f$ is just a parameter, whose value is given in {numref}`tbl_prinz-model_constants`.
 
 # %% [markdown]
 # ### Constant low-dimensional parameters
 
 # %% [markdown]
-# :::{list-table} (Values provided in {cite:t}`prinzAlternativeHandTuningConductanceBased2003`.)
+# :::{list-table} __Ion channel parameters__ for the dynamics defined in Eq. {eq}`eq-prinz-model-conductance`. Values are taken from {cite:t}`prinzAlternativeHandTuningConductanceBased2003`.
 # :header-rows: 1
 # :stub-columns: 1
 # :align: center
@@ -478,13 +480,13 @@ dims.t.unit = "ms"
 # \end{align*}$$
 #
 # where $R$ is the ideal gas constant (or $k_B$ the Boltzman constant), $T$ the temperature, $z$ the charge of the ions and $F$ the Faraday constant (or $e$ the elementary charge).
-# Since lobsters are ectotherms (cold-blooded) and live in cold shallow Atlantic waters, a reasonable temperature range might be 1–10°C, which corresponds to the range $γ \in (11.8, 12.2)\,\mathrm{mV}$ for ions with $z=2$. In this implementation we fix $γ$ to $12.2\,\mathrm{mV}$ (this matches the value for `Nernstfactor` is the [published source code](https://biology.emory.edu/research/Prinz/database-sensors/#download)), and following {cite:t}`prinzAlternativeHandTuningConductanceBased2003`, further set $\bigl[\Ca^{2+}\bigr]_{\mathrm{out}}$ to $3\,\mathrm{mM}$.
+# Since lobsters are ectotherms (cold-blooded) and live in cold shallow Atlantic waters, a reasonable temperature range might be 1–10°C, which corresponds to the range $γ \in (11.8, 12.2)\,\mathrm{mV}$ for ions with $z=2$. In this implementation we fix $γ$ to $12.2\,\mathrm{mV}$ (this matches the value for `Nernstfactor` in the [published source code](https://biology.emory.edu/research/Prinz/database-sensors/#download)), and following {cite:t}`prinzAlternativeHandTuningConductanceBased2003`, further set $\bigl[\Ca^{2+}\bigr]_{\mathrm{out}}$ to $3\,\mathrm{mM}$.
 
 # %% tags=["remove-cell", "active-ipynb"]
 # (Q_([1, 10], ureg.degC).to("kelvin") * ureg.boltzmann_constant / (2*ureg.elementary_charge)).to("mV")
 
 # %% [markdown]
-# :::{list-table} Constants
+# :::{list-table} Constants used in Eq. {eq}`eq-prinz-model-conductance`.
 # :name: tbl_prinz-model_constants
 # :header-rows: 1
 #
@@ -518,7 +520,7 @@ dims.t.unit = "ms"
 # :::
 
 # %% [markdown]
-# If we multiply all the units en Eq. {eq}`eq-prinz-model-conductance` together, using $10^{-3} \, \mathrm{cm}^2$ for the unit of $A$, we find that they simplify to $1\,\mathrm{mV}/\mathrm{ms}$ – the desired units for $dV/dt$. Therefore we can write the implementation using only the magnitudes in the *values* column of {numref}`tbl_prinz-model_constants` and ignore the units. Moreover, we omit $C$ and $A$ since their magnitudes cancel.
+# If we multiply all the units in Eq. {eq}`eq-prinz-model-conductance` together, using $10^{-3} \, \mathrm{cm}^2$ for the unit of $A$, we find that they simplify to $1\,\mathrm{mV}/\mathrm{ms}$ – the desired units for $dV/dt$. Therefore we can write the implementation using only the magnitudes in the *values* column of {numref}`tbl_prinz-model_constants` and ignore the units. Moreover, we omit $C$ and $A$ since their magnitudes cancel.
 
 # %% tags=["active-ipynb", "remove-cell"]
 # # ------g----------   --V-E--   ---------A---------   ---C---
@@ -909,7 +911,7 @@ neuron_models = g_cond
 # :class: margin dropdown opaque
 #
 # - When $a = 0$, the values of $b$ and $c$ are irrelevant, but we should not use $c=0$ to avoid dividing by zero.
-# - The $h$ current is not used for $I_\KCa$, $I_\Kd$ and $I_H$. Because we use vectorized operations, the computations are still performed, but the result is afterwards discarded. (`h_slice` is used to select only those channels with an $h$ variable.)
+# - The inactivating variable $h$ is not used for $I_\KCa$, $I_\Kd$ and $I_H$. Because we use vectorized operations, the computations are still performed, but the result is afterwards discarded. (`h_slice` is used to select only those channels with an $h$ variable.)
 # - The variable $τ_m(I_H)$ is defined purely in terms of $y$. We do this by setting $σ=0$ and $C=1$.
 # :::
 
@@ -1208,12 +1210,12 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # Unfortunately {cite:t}`prinzSimilarNetworkActivity2004` do not seem to document the value of $g_e$ they use. For our simulations we set it to 1, so it can be omitted in the implementation. $I_e$ is then simply implemented as `V[:,newaxis] - V`, which yields the following antisymmetric matrix
 #
-# [^also-diff-sign]: As for the [chemical synapses](sec_chem-synapse-model), we invert the sign to match the convention in {cite:t}`prinzSimilarNetworkActivity2004`.
+# [^also-diff-sign]: As with the [chemical synapses](sec_chem-synapse-model), we invert the sign to match the convention in {cite:t}`prinzSimilarNetworkActivity2004`.
 
 # %% editable=true slideshow={"slide_type": ""} tags=["remove-input", "active-ipynb"]
 # _ = ["AB", "PD1", "PD2"]
 # _ = np.array([["0" if post==pre else f"{post} - {pre}" for pre in _] for post in _])
-# _ = pd.DataFrame(_, index=pd.Index(["AB", "PD1", "PD2"], name="post ↓"), columns=pd.Index(["AB", "PD1", "PD2"], name="pre →")).style.set_caption("$V_{\mathrm{post}} - V_{\mathrm{pre}}$ matrix")
+# _ = pd.DataFrame(_, index=pd.Index(["AB", "PD1", "PD2"], name="post ↓"), columns=pd.Index(["AB", "PD1", "PD2"], name="pre →")).style.set_caption(r"$V_{\mathrm{post}} - V_{\mathrm{pre}}$ matrix")
 # display_dataframe_with_math(_)
 
 # %% [markdown]
@@ -1222,7 +1224,7 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # The chemical synapse model is defined in {cite:t}`prinzSimilarNetworkActivity2004` (p.1351, §**Methods**) and {cite:t}`marderModelingSmallNetworks1998` (Eqs. (14,18,19)) Here again, in case of discrepancy, we use the notation from {cite:t}`prinzSimilarNetworkActivity2004`.[^diff-sign]
 #
-# [^diff-sign]:  In particular that the two references use different conventions for the sign of $I_s$, which affects the sign in Eq. {eq}`eq-prinz-model-conductance`.
+# [^diff-sign]:  In particular the two references use different conventions for the sign of $I_s$, which affects the sign in Eq. {eq}`eq-prinz-model-conductance`.
 
 # %% [markdown] editable=true slideshow={"slide_type": ""}
 # $$\begin{align*}
@@ -1238,7 +1240,7 @@ def act_vars(V, Ca, y=y, exp=jnp.exp, a=act_params.a[...,np.newaxis], b=act_para
 #
 # These are the equations as reported in {cite:t}`prinzSimilarNetworkActivity2004`, but as-is they are numerically unstable because $s$ should stay bounded between 0 and 1. The equations ensure this by assuming infinitely precise integration: as $s_\infty$ approaches 1, $τ_s$ goes to zero and $ds/dt$ diverges. Diverging derivatives cause a numerical integrator to stall, since it must make smaller and smaller time steps in order to maintain precision.
 #
-# In the [implementation](sec-prinz-model-implementation) below, we mitigate this issues in two ways:
+# In the [implementation](sec-prinz-model-implementation) below, we mitigate this issue in two ways:
 #
 # 1. We actually track $\tilde{s} = \log \frac{s}{1-s}$, which is the logit transform of $s$. This has the advantage of being unbounded, so applying a discrete update $\tilde{s}_{t+Δt} = \tilde{s}_t + \frac{d\tilde{s}}{dt} Δt$ will never produce an invalid value of $\tilde{s}$. The logit function is also monotone and thus invertible; its inverse is $s = \frac{1}{1 + e^{-\tilde{s}}}$, and its derivative $\frac{d\tilde{s}}{dt} = \frac{1}{s(1-s)} \frac{ds}{dt}$.
 # 2. We add a small $ε = 10^{-8}$ to the denominator to ensure it is never exactly zero:
@@ -1487,21 +1489,19 @@ syn_constants = pd.DataFrame.from_dict(
 #
 # Optimize the linear algebra operations
 # ~ For simplicity, when evaluating currents, the implementation uses expressions of the form
+#   %
 #   $$\sum_j [g u v^T]_{ij} \,$$
+#   %
 #   where $g$ is a matrix and $u$ and $v$ are vectors. This produces the $N \times N$ matrix $u v^T$ as an intermediate step.
 #   Reworking the expression to use `.dot` would like provide some improvements, although as long as the number of neurons is small, this improvement may be modest.
 #   
-# Rewrite using JAX
-# ~ If one really needs C-level performance, the most effective approach (in terms of gain/effort) may be be to rewrite this function with [JAX](https://jax.readthedocs.io).
-#   This should be much simpler than porting to C, since the API of JAX is by design nearly identical to that of NumPy.
-#   Moreover, by keeping the code in terms of high-level linear algebra operations, we leave the optimization to JAX, which is likely to do a better job than any custom C-code we write.
-#   In particular, since all of the costly operations are standard linear algebra, one could use JAX’s ability to compile for GPU, and possibly obtain a simulator capable of simulating very large numbers of neurons on a single workstation.
+# Support executation on GPU
+# ~ JAX has the ability to compile for GPU, and it may be possible to use that ability to run the integration on GPU, thus opening the door to simulating very large numbers of neurons on a single workstation. The main hurdle here is likely to be ensuring that the higher-level SciPy ODE function does not cause data to be needlessly between CPU and GPU.
 #     
-# Rewrite as a C function
+# Use a low-level function
 # ~ SciPy has an object called a `LowLevelCallable`, which can be used to pass callback functions to SciPy functions which don’t carry the overhead of a Python function.
-#   This is useful for things like integrators, where the number of calls is large compared to the evaluation time of a single function call.
-#   However doing this is a lot of work, and we lose the possibility to use NumPy’s array broadcasting to keep code at a relatively high level.
-#   Rewriting in JAX is likely to be much faster, and might allow use of additional resources like GPUs.
+#   I have not looked at whether this can be used with JAX functions, or whether it is useful in that case, but it seems plausible.
+#   This might also be useful in ensuring that data allocated on the GPU stays on the GPU.
 #
 # :::
 
@@ -1726,7 +1726,7 @@ def dX(t, X,
 # ~ The final state of the initialization run is the thermalized initialization. 
 #   Subsequent calls with the same model will retrieve this state from the cache.
 #   
-# During the thermalizaton run, the model is disconnected (all connectivities $g_s$ are set to 0) and receives no external input;
+# During the thermalization run, the model is disconnected (all connectivities $g_s$ are set to 0) and receives no external input;
 # this mirrors the procedure followed by {cite:t}`prinzAlternativeHandTuningConductanceBased2003`.
 # If we did not disconnect neurons, many of them would never reach a steady state since the circuit is designed to spontaneously oscillate.
 # Moreover, one would need to generate and store a different initialization for each circuit, rather than for each neuron, which is combinatorially many more.
@@ -1754,16 +1754,16 @@ def dX(t, X,
 #
 # - We don’t first compute the thermalization for individual model neurons separately, but instead recompute it for each combination of neuron models. (Specifically, each thermalization run is identified by a `g_cond` matrix – $g_s$ and $I_{\mathrm{ext}}$ are ignored, since they are set to zero during thermalization.) If we were to simulate the entire catalog of neuron model combinations this would be wasteful, but since we only need a handful, this approach is adequate and simpler to implement.
 #
-# - Instead of fixed-step Euler integration, we use the Runge-Kutta 4(5) algorithm with adaptive step sizes included in `scipy.integrate`. This is not only more efficient than Euler, but also allows one to estimate numerical errors.
+# - Instead of fixed-step Euler integration, we use the Runge-Kutta 4(5) algorithm with adaptive step sizes included in `scipy.integrate`. This is not only more efficient than Euler, but should also provide a notable improvement in numerical accuracy during sharp spikes.
 #   (Although the integration scheme is currently hard-coded, since we are using standard `scipy` integrators, it would be easy enough to change it or make it user-configurable. Indeed, while standard, RK45 is not necessarily the best choice for Hodgkin-Huxley systems since they are moderately stiff.)
 #
 # - Finally, instead of detecting the steady state automatically, we use a fixed integration time and rely on visual inspection to determine whether this is enough to let transients decay in all considered models. Again we can do this because we only need to simulate a handful of models.
 #
 # [^cold-init-s]: Except for $s$, which is initialized to 0 based on the section *Network simulation and classification* of {cite:t}`prinzSimilarNetworkActivity2004`. In any case, since we set the value of $g_s$ to 0 during the initialization run, the initial value we choose for $s$ is not important.
 #
-# The main *practical* difference is that instead of pre-computing a neuron catalogue, the thermalization is done automatically and on-demand. For the user therefore it makes no difference whether a warm initialization for a particular circuit is available or not: when they request a simulation, if no warm initialization is available, they just need to wait longer to get their result. Subsequent runs then reuse the warm initialization computed on the first run.
+# The main *practical* difference is that instead of pre-computing a neuron catalogue, the thermalization is done automatically and on-demand. For the user therefore it makes little difference whether a warm initialization for a particular circuit is available or not: when they request a simulation, if no warm initialization is available, they just need to wait longer to get their result. Subsequent runs then reuse the warm initialization computed on the first run.
 #
-# **Implementation**
+# **Interface**
 # - The cold initialization is given by the class method `State.cold_initialized`.
 # - The warm-up simulation is implemented in the method `Prinz2004.get_thermalization`.
 #
