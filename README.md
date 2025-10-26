@@ -1,7 +1,7 @@
 # Pyloric network simulator
 
 The pyloric circuit model described by Prinz at al.[^model-def] continues to be studied today,
-both as an instructive model of an interesting biological process[^prinz-research] and also as a case study of functional diversity in computational models.[^goncalves2022]
+both as an instructive model of an interesting biological process[^prinz-research] and also as a case study of functional diversity in computational models.[^goncalves2020]
 
 This repository is a reimplementation of the model in pure Python, using JAX to achieve comparable execution speeds as C/C++.
 
@@ -39,7 +39,7 @@ It is especially meant for users who want to modify the code themselves, or inte
       don’t perform any thermalization.
     - Here models are thermalized on demand the first time a new parameter combination is used.
       The result is then saved to an on-disk cache (managed with `shelve`).
-      This makes thermalizations completely transparent to the user (modulo a 5–10 min wait time) and ensures that
+      This makes thermalization completely transparent to the user (modulo a 5–10 min wait time) and ensures that
       it is performed only on those models which we actually need. This is a much more efficient approach if
       + We will need to execute the model with a limited number of parameters (e.g. because the parameter ranges we
         want to explore have already been identified).
@@ -196,5 +196,5 @@ Ensure the *.md* and *.py* files are synchronized
     • Marder, E. & Abbott, L. F. *Modeling small networks.* in Methods in neuronal modeling: from ions to networks (eds. Koch, C. & Segev, I.) (MIT Press, 1998).
 
 [^prinz-research]: https://biology.emory.edu/research/Prinz/research.html
-[^goncalves2022]: Gonçalves, P. J. et al. *Training deep neural density estimators to identify mechanistic models of neural dynamics.* eLife 9, e56261 (2020). [doi:10.7554/eLife.56261](https://doi.org/10.7554/eLife.56261)
+[^goncalves2020]: Gonçalves, P. J. et al. *Training deep neural density estimators to identify mechanistic models of neural dynamics.* eLife 9, e56261 (2020). [doi:10.7554/eLife.56261](https://doi.org/10.7554/eLife.56261)
 [^jupytext]: Presuming the [Jupytext](https://jupytext.readthedocs.io/) extension is installed.

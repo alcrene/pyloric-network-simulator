@@ -4,3 +4,4 @@
 _version.py
 /build
 /pyloric_simulator/simresults
+/test/simresults
